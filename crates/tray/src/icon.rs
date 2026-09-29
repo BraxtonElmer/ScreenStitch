@@ -1,12 +1,12 @@
 //! The tray icon, drawn in code: two screens of different sizes joined by a
 //! stitch. Matches the taskbar's light/dark theme; faded while turned off.
 
-use std::ptr::{null, null_mut};
+use std::ptr::null_mut;
 
 use windows_sys::Win32::System::Registry::{HKEY_CURRENT_USER, RRF_RT_REG_DWORD, RegGetValueW};
 use windows_sys::Win32::UI::WindowsAndMessaging::{CreateIcon, HICON};
 
-use crate::wide::to_wide;
+use screenstitch_platform::wide::to_wide;
 
 const SIZE: usize = 32;
 
@@ -56,6 +56,5 @@ fn taskbar_is_light() -> bool {
             &mut len,
         )
     };
-    let _ = null::<u8>();
     rc == 0 && v != 0
 }

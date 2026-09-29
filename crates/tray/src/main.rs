@@ -2,21 +2,25 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app;
-mod config;
-mod display;
-mod edid;
+mod fullscreen;
 mod hook;
 mod icon;
-mod wide;
+mod overlay;
 
 use std::ptr::null;
 
-use screenstitch_core::{Layout, Monitor, auto_arrange};
+use screenstitch_platform::display;
+use screenstitch_platform::tray::{self, MSG_OPEN_SETTINGS};
+use screenstitch_platform::wide::to_wide;
+use screenstitch_platform::{alignment_line_mm, auto_rects, layout};
 use windows_sys::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError};
 use windows_sys::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
 use windows_sys::Win32::System::Threading::CreateMutexW;
 use windows_sys::Win32::UI::HiDpi::{DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext};
 
+/// `ScreenStitch.exe`            start in the tray and open the settings window
+/// `ScreenStitch.exe --background` start quietly (used by "Start with Windows")
+/// `ScreenStitch.exe --list`       print the detected screens and guessed layout
 fn main() {
     // Without this every coordinate Windows hands us is scaled and wrong.
     unsafe { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) };
@@ -27,28 +31,28 @@ fn main() {
         list();
         return;
     }
+    let background = args.iter().any(|a| a == "--background");
 
-    let name = wide::to_wide(r"Local\ScreenStitch.Agent");
+    let name = to_wide(r"Local\ScreenStitch.Tray");
     let _mutex = unsafe { CreateMutexW(null(), 0, name.as_ptr()) };
     if unsafe { GetLastError() } == ERROR_ALREADY_EXISTS {
-        return; // already running
+        // Already running: opening the app again means "show me the window".
+        if !background {
+            tray::post(MSG_OPEN_SETTINGS, 0);
+        }
+        return;
     }
-    app::run();
+    app::run(!background);
 }
 
-/// `screenstitch --list`: what was detected and the layout it would use.
 fn list() {
     let displays = display::detect();
-    let px: Vec<_> = displays.iter().map(|d| d.px).collect();
-    let mm: Vec<_> = displays.iter().map(|d| d.size_mm).collect();
-    let primary = displays.iter().position(|d| d.primary).unwrap_or(0);
-    let rects = auto_arrange(&px, &mm, primary);
-
-    for (i, (d, r)) in displays.iter().zip(&rects).enumerate() {
+    let rects = auto_rects(&displays);
+    for (d, r) in displays.iter().zip(&rects) {
         let diag = (d.size_mm.0.powi(2) + d.size_mm.1.powi(2)).sqrt() / 25.4;
         println!(
-            "{}. {}{}  [{}]\n   pixels {}x{} at ({}, {})\n   size   {:.0} x {:.0} mm ({:.1}\"){}\n   desk   x {:.0} mm, y {:.0} mm",
-            i + 1,
+            "{}. {}{}  [{}]\n   pixels {}x{} at ({}, {}), scaling {}%\n   size   {:.0} x {:.0} mm ({:.1}\"){}\n   desk   x {:.0} mm, y {:.0} mm",
+            d.number,
             d.name,
             if d.primary { " (main)" } else { "" },
             d.id,
@@ -56,6 +60,7 @@ fn list() {
             d.px.height(),
             d.px.left,
             d.px.top,
+            d.scale,
             d.size_mm.0,
             d.size_mm.1,
             diag,
@@ -64,9 +69,9 @@ fn list() {
             r.y,
         );
     }
-    let layout = Layout::new(displays.iter().zip(rects).map(|(d, r)| Monitor::new(d.px, r)).collect());
-    let lost = layout.unreachable();
+    println!("alignment line at {:.0} mm", alignment_line_mm(&rects));
+    let lost = layout(&displays, &rects).unreachable();
     if !lost.is_empty() {
-        println!("warning: screens {lost:?} can't be reached from screen 1");
+        println!("warning: screens {lost:?} can't be reached from the first one");
     }
 }

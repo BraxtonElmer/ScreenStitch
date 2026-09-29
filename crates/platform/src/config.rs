@@ -12,8 +12,28 @@ pub struct Config {
     pub version: u32,
     #[serde(default = "yes")]
     pub enabled: bool,
+    /// Step aside while a fullscreen game or presentation is in front.
+    #[serde(default = "yes")]
+    pub pause_in_fullscreen: bool,
+    #[serde(default)]
+    pub appearance: Appearance,
     #[serde(default)]
     pub profiles: BTreeMap<String, Profile>,
+}
+
+/// Settings window look. The tray app ignores it.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Appearance {
+    /// "system", "light" or "dark".
+    pub theme: String,
+    /// Accent colour as `#rrggbb`; empty = the Windows accent colour.
+    pub accent: String,
+}
+
+impl Default for Appearance {
+    fn default() -> Self {
+        Self { theme: "system".into(), accent: String::new() }
+    }
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -39,7 +59,13 @@ fn yes() -> bool {
 
 impl Default for Config {
     fn default() -> Self {
-        Self { version: 1, enabled: true, profiles: BTreeMap::new() }
+        Self {
+            version: 1,
+            enabled: true,
+            pause_in_fullscreen: true,
+            appearance: Appearance::default(),
+            profiles: BTreeMap::new(),
+        }
     }
 }
 

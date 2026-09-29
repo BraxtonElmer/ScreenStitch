@@ -31,6 +31,10 @@ pub struct Display {
     /// False when the size was guessed from the scaling setting.
     pub size_from_edid: bool,
     pub primary: bool,
+    /// Windows scaling in percent (100, 125, 150...).
+    pub scale: u32,
+    /// The number Windows shows for this display (from `\\.\DISPLAYn`).
+    pub number: u32,
 }
 
 struct Gdi {
@@ -90,7 +94,9 @@ pub fn detect() -> Vec<Display> {
                 (None, Some(t)) => instance_of(&t.device_path),
                 _ => g.device.clone(),
             };
-            Display { id, name, px: g.px, size_mm, size_from_edid, primary: g.primary }
+            let scale = if g.dpi == 0 { 100 } else { (g.dpi * 100 + 48) / 96 };
+            let number = g.device.trim_start_matches(r"\\.\DISPLAY").parse().unwrap_or(0);
+            Display { id, name, px: g.px, size_mm, size_from_edid, primary: g.primary, scale, number }
         })
         .collect();
 

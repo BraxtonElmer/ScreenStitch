@@ -2,3 +2,6 @@
 *.log
 PLAN.md
 /dist
+node_modules/
+settings/build/
+settings/src-tauri/gen/

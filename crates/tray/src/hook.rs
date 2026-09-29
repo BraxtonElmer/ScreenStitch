@@ -10,6 +10,7 @@ use std::ptr::null_mut;
 use screenstitch_core::{Action, Engine, Point, RectI};
 use windows_sys::Win32::Foundation::{LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
+use windows_sys::Win32::System::SystemInformation::GetTickCount64;
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CURSOR_SHOWING, CURSORINFO, CallNextHookEx, ClipCursor, GetClipCursor, GetCursorInfo, GetCursorPos,
@@ -23,6 +24,9 @@ const PEN_TOUCH_MASK: usize = 0xFFFF_FF00;
 
 struct State {
     engine: Engine,
+    pause_in_fullscreen: bool,
+    /// (checked at tick, fullscreen app in front) — asking the shell is cached briefly.
+    fullscreen: (u64, bool),
     /// The clip rectangle we set last, so we never undo one a game set.
     managed_clip: Option<RectI>,
 }
@@ -33,11 +37,11 @@ thread_local! {
 }
 
 /// Start (or restart with a new layout) handling moves.
-pub fn start(engine: Engine) {
+pub fn start(engine: Engine, pause_in_fullscreen: bool) {
     release_clip();
     let mut engine = engine;
     engine.resync(cursor_pos());
-    STATE.with(|s| *s.borrow_mut() = Some(State { engine, managed_clip: None }));
+    STATE.with(|s| *s.borrow_mut() = Some(State { engine, pause_in_fullscreen, fullscreen: (0, false), managed_clip: None }));
     HOOK.with(|h| {
         let mut h = h.borrow_mut();
         if h.is_null() {
@@ -127,14 +131,25 @@ impl State {
     }
 
     /// Someone else is in charge right now (a game, or the user holding Ctrl).
-    fn bypassed(&self) -> bool {
-        if ctrl_down() || !cursor_visible() {
+    fn bypassed(&mut self) -> bool {
+        if ctrl_down() || !cursor_visible() || self.fullscreen_app_in_front() {
             return true;
         }
         match current_clip() {
             None => false,
             Some(c) => Some(c) != self.managed_clip && c != virtual_screen(),
         }
+    }
+
+    fn fullscreen_app_in_front(&mut self) -> bool {
+        if !self.pause_in_fullscreen {
+            return false;
+        }
+        let now = unsafe { GetTickCount64() };
+        if now.saturating_sub(self.fullscreen.0) > 500 {
+            self.fullscreen = (now, crate::fullscreen::app_in_front());
+        }
+        self.fullscreen.1
     }
 
     fn ensure_clip(&mut self, r: RectI) {
