@@ -1,0 +1,75 @@
+name: Release
+
+# Pushing a tag like v0.1.0 builds the installer, signs the update package and
+# creates a draft GitHub release with the notes from CHANGELOG.md. Publishing
+# the draft is what makes it reach users and the in-app updater.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: settings/package-lock.json
+
+      - name: Install settings dependencies
+        working-directory: settings
+        run: npm ci
+
+      - name: Check the tag matches the app version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'.TrimStart('v')
+          $app = (Get-Content settings/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($tag -ne $app) { throw "Tag v$tag doesn't match version $app in tauri.conf.json" }
+
+      - name: Release notes from CHANGELOG.md
+        id: notes
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          $changelog = Get-Content CHANGELOG.md -Raw
+          $section = [regex]::Match($changelog, "(?ms)^## \[$([regex]::Escape($version))\][^\n]*\n(.*?)(?=^## \[|\z)")
+          if (-not $section.Success) { throw "CHANGELOG.md has no section for $version" }
+          $delimiter = [guid]::NewGuid()
+          "body<<$delimiter`n$($section.Groups[1].Value.Trim())`n$delimiter" >> $env:GITHUB_OUTPUT
+
+      - name: Build, sign and draft the release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: settings
+          tagName: ${{ github.ref_name }}
+          releaseName: ScreenStitch ${{ github.ref_name }}
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: true
+          includeUpdaterJson: true
+
+      - name: Add a portable zip
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $name = "ScreenStitch-${{ github.ref_name }}-portable-x64"
+          New-Item -ItemType Directory $name | Out-Null
+          Copy-Item target/release/screenstitch-tray.exe "$name/ScreenStitch.exe"
+          Copy-Item target/release/screenstitch-settings.exe, LICENSE $name
+          Compress-Archive $name "$name.zip"
+          gh release upload '${{ github.ref_name }}' "$name.zip" --clobber

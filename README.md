@@ -20,6 +20,14 @@ expects it.
 Hold **Ctrl** to cross the plain Windows way, or press **Ctrl+Alt+Shift+S** to
 turn ScreenStitch on or off at any time.
 
+## Install
+
+Download the installer from the
+[latest release](https://github.com/BraxtonElmer/ScreenStitch/releases/latest)
+and run it. No admin rights are needed. There's also a portable zip if you'd
+rather not install anything. ScreenStitch keeps itself up to date and asks
+before installing a new version.
+
 ## Build
 
 Needs Rust and Node.js.
