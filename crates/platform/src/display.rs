@@ -73,6 +73,7 @@ pub fn detect() -> Vec<Display> {
             {
                 size = Some((h, w));
             }
+            let size = size.map(|s| edid::refine_rounded_size(s, (w_px, h_px)));
             let size_from_edid = size.is_some();
             let size_mm = size.unwrap_or_else(|| {
                 let dpi = if g.dpi == 0 { 96.0 } else { f64::from(g.dpi) };

@@ -24,7 +24,7 @@ pub fn desk_rects(config: &mut Config, displays: &[Display]) -> (Vec<RectF>, boo
             .iter()
             .map(|d| {
                 let r = p.monitors[&d.id];
-                RectF::new(r.x, r.y, r.w, r.h)
+                upgrade_rounded_size(RectF::new(r.x, r.y, r.w, r.h), d.size_mm)
             })
             .collect();
         return (rects, false);
@@ -32,6 +32,21 @@ pub fn desk_rects(config: &mut Config, displays: &[Display]) -> (Vec<RectF>, boo
     let rects = auto_rects(displays);
     save_rects(config, displays, &rects);
     (rects, true)
+}
+
+/// Layouts saved before whole-centimetre EDID sizes were refined still hold the
+/// rounded size (e.g. 600 x 340 mm). Swap in the precise one, keeping the
+/// screen centred where the user put it. A size the user typed differs by more
+/// than rounding and is left alone.
+fn upgrade_rounded_size(r: RectF, detected: (f64, f64)) -> RectF {
+    let rounded = r.w % 10.0 == 0.0 && r.h % 10.0 == 0.0;
+    let close = (r.w - detected.0).abs() <= 6.0 && (r.h - detected.1).abs() <= 6.0;
+    let differs = (r.w - detected.0).abs() > 0.01 || (r.h - detected.1).abs() > 0.01;
+    if !(rounded && close && differs) {
+        return r;
+    }
+    let (w, h) = detected;
+    RectF::new(r.x + (r.w - w) / 2.0, r.y + (r.h - h) / 2.0, w, h)
 }
 
 /// Layout guessed purely from Windows' arrangement and EDID sizes.

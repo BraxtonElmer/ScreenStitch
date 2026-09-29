@@ -5,7 +5,7 @@
 use std::cell::RefCell;
 use std::ptr::{null, null_mut};
 
-use screenstitch_core::RectF;
+use screenstitch_core::{Monitor, RectF, Side};
 use screenstitch_platform::alignment_line_mm;
 use screenstitch_platform::display::Display;
 use windows_sys::Win32::Foundation::{COLORREF, HWND};
@@ -55,7 +55,10 @@ pub fn show(displays: &[Display], rects: &[RectF]) {
         if y_mm < r.y || y_mm > r.bottom() {
             continue; // this screen doesn't reach that height
         }
-        let y = d.px.top + ((y_mm - r.y) / r.h * f64::from(d.px.height())).round() as i32 - THICKNESS / 2;
+        // The same mm -> pixel-row mapping the crossing engine uses, so the line
+        // sits exactly on the row the cursor lands on; centred on that row.
+        let row = Monitor::new(d.px, *r).mm_to_px_along(Side::Left, y_mm).round() as i32;
+        let y = row - THICKNESS / 2;
         let hwnd = unsafe {
             CreateWindowExW(
                 WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,

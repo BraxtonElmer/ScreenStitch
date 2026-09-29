@@ -61,6 +61,31 @@ fn plausible(w: f64, h: f64) -> bool {
     (80.0..=3000.0).contains(&w) && (50.0..=3000.0).contains(&h) && (0.2..=5.0).contains(&(w / h))
 }
 
+/// Many monitors only report whole centimetres (e.g. 600 x 340 mm for a 27"
+/// panel that is really 597.7 x 336.2 mm). Half a centimetre off is enough to
+/// put crossings a millimetre or two off, so such sizes are rebuilt from the
+/// panel's diagonal (snapped to the nearest standard size) and the exact shape
+/// of its pixel grid.
+pub fn refine_rounded_size(size: (f64, f64), pixels: (f64, f64)) -> (f64, f64) {
+    let (w, h) = size;
+    let rounded = w % 10.0 == 0.0 && h % 10.0 == 0.0;
+    if !rounded || pixels.0 <= 0.0 || pixels.1 <= 0.0 {
+        return size;
+    }
+    const STANDARD_INCHES: [f64; 34] = [
+        13.3, 14.0, 15.6, 17.0, 17.3, 18.5, 19.0, 19.5, 20.0, 21.5, 22.0, 23.0, 23.6, 23.8, 24.0, 24.5, 25.0, 27.0,
+        28.0, 29.0, 30.0, 31.5, 32.0, 34.0, 35.0, 38.0, 40.0, 42.0, 43.0, 45.0, 48.0, 49.0, 55.0, 65.0,
+    ];
+    let inches = w.hypot(h) / 25.4;
+    let nearest = STANDARD_INCHES.iter().copied().min_by(|a, b| (a - inches).abs().total_cmp(&(b - inches).abs()));
+    // Whole-centimetre rounding moves the diagonal by at most ~0.3".
+    let inches = nearest.filter(|n| (n - inches).abs() <= 0.35).unwrap_or(inches);
+    let aspect = pixels.0 / pixels.1;
+    let diag = inches * 25.4;
+    let h = diag / aspect.hypot(1.0);
+    (h * aspect, h)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -101,6 +126,21 @@ mod tests {
         b[67] = 9;
         b[68] = 0;
         assert_eq!(parse(&b).unwrap().size_mm, Some((600.0, 340.0)));
+    }
+
+    #[test]
+    fn whole_centimetre_sizes_are_rebuilt_from_the_diagonal() {
+        // LG 27" reporting 600 x 340 mm; the real panel is 597.7 x 336.2 mm.
+        let (w, h) = refine_rounded_size((600.0, 340.0), (2560.0, 1440.0));
+        assert!((w - 597.7).abs() < 0.2 && (h - 336.2).abs() < 0.2, "{w} x {h}");
+        // Portrait: sizes and pixels both already rotated.
+        let (w, h) = refine_rounded_size((340.0, 600.0), (1080.0, 1920.0));
+        assert!((w - 336.2).abs() < 0.2 && (h - 597.7).abs() < 0.2, "{w} x {h}");
+    }
+
+    #[test]
+    fn exact_sizes_are_kept() {
+        assert_eq!(refine_rounded_size((597.0, 336.0), (2560.0, 1440.0)), (597.0, 336.0));
     }
 
     #[test]
