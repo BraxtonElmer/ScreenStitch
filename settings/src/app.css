@@ -66,9 +66,9 @@
 :root[data-material='acrylic'] {
   /* Windows 11 draws its own acrylic and ignores the requested tint, so the
      frost's darkness is set here. */
-  --bg: rgba(232, 232, 236, 0.78);
-  --surface: rgba(255, 255, 255, 0.42);
-  --surface-2: rgba(255, 255, 255, 0.3);
+  --bg: rgba(236, 236, 240, 0.3);
+  --surface: rgba(255, 255, 255, 0.55);
+  --surface-2: rgba(255, 255, 255, 0.42);
   --well: rgba(0, 0, 0, 0.05);
   --stroke: rgba(255, 255, 255, 0.55);
   --stroke-strong: rgba(0, 0, 0, 0.14);
@@ -78,12 +78,12 @@
   --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 :root[data-material='acrylic'][data-theme='dark'] {
-  /* Dense enough to look the same when Windows turns acrylic off for an
-     unfocused window, light enough to let the frost through when focused. */
-  --bg: rgba(14, 14, 16, 0.8);
-  --surface: rgba(255, 255, 255, 0.055);
-  --surface-2: rgba(255, 255, 255, 0.04);
-  --well: rgba(0, 0, 0, 0.38);
+  /* A light tint so the blur behind clearly shows; cards are smoked glass so
+     text on them stays crisp whatever is behind the window. */
+  --bg: rgba(12, 12, 14, 0.32);
+  --surface: rgba(16, 16, 19, 0.5);
+  --surface-2: rgba(16, 16, 19, 0.4);
+  --well: rgba(0, 0, 0, 0.32);
   --stroke: rgba(255, 255, 255, 0.1);
   --stroke-strong: rgba(255, 255, 255, 0.18);
   --control: rgba(255, 255, 255, 0.08);
