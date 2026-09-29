@@ -6,6 +6,7 @@
   import Desk from './lib/Desk.svelte';
   import Switch from './lib/Switch.svelte';
   import Segmented from './lib/Segmented.svelte';
+  import TitleBar from './lib/TitleBar.svelte';
 
   let st = $state<State | null>(null);
   let desk = $state<DeskRect[]>([]);
@@ -198,6 +199,7 @@
 
 <svelte:window onkeydown={keydown} />
 
+<TitleBar />
 {#if st}
   <main>
     <header>
@@ -394,11 +396,12 @@
 
 <style>
   main {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 20px 24px 14px;
+    padding: 6px 24px 14px;
   }
   header {
     display: flex;

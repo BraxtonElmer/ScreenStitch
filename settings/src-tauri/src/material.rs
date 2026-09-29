@@ -9,12 +9,13 @@ use crate::system;
 /// "mica" or "solid") so the page can pick matching surface colours.
 pub fn apply(window: &WebviewWindow, wanted: &str, dark: bool) -> &'static str {
     let effects = match wanted {
-        // A neutral tint keeps text readable over busy windows behind.
+        // A dense graphite (or pale grey) tint: frosted, not see-through, so
+        // text stays readable over anything behind the window.
         "acrylic" => Some((
             "acrylic",
             EffectsBuilder::new()
                 .effect(Effect::Acrylic)
-                .color(if dark { Color(28, 28, 30, 150) } else { Color(245, 245, 247, 150) })
+                .color(if dark { Color(20, 20, 23, 210) } else { Color(214, 214, 218, 200) })
                 .build(),
         )),
         "mica" if system::supports_mica() => {

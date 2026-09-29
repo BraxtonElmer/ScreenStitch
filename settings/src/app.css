@@ -60,28 +60,47 @@
   --well: rgba(0, 0, 0, 0.18);
 }
 
-/* Frosted glass: whatever is behind the window shows through, blurred.
-   Cards are thin panes of lighter glass with a crisp edge; no gradients. */
+/* Frosted glass: a dense grey frost over whatever is behind the window.
+   Cards are slightly lighter panes with a thin highlight on the top edge;
+   a faint grain gives the frost its texture. No colour washes. */
 :root[data-material='acrylic'] {
-  --bg: transparent;
-  --surface: rgba(255, 255, 255, 0.5);
-  --surface-2: rgba(255, 255, 255, 0.35);
-  --well: rgba(255, 255, 255, 0.28);
-  --stroke: rgba(255, 255, 255, 0.7);
-  --control: rgba(255, 255, 255, 0.7);
-  --control-hover: rgba(255, 255, 255, 0.9);
-  --tile: rgba(255, 255, 255, 0.82);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* Windows 11 draws its own acrylic and ignores the requested tint, so the
+     frost's darkness is set here. */
+  --bg: rgba(232, 232, 236, 0.78);
+  --surface: rgba(255, 255, 255, 0.42);
+  --surface-2: rgba(255, 255, 255, 0.3);
+  --well: rgba(0, 0, 0, 0.05);
+  --stroke: rgba(255, 255, 255, 0.55);
+  --stroke-strong: rgba(0, 0, 0, 0.14);
+  --control: rgba(255, 255, 255, 0.6);
+  --control-hover: rgba(255, 255, 255, 0.8);
+  --tile: rgba(255, 255, 255, 0.7);
+  --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 :root[data-material='acrylic'][data-theme='dark'] {
-  --surface: rgba(255, 255, 255, 0.06);
+  /* Dense enough to look the same when Windows turns acrylic off for an
+     unfocused window, light enough to let the frost through when focused. */
+  --bg: rgba(14, 14, 16, 0.8);
+  --surface: rgba(255, 255, 255, 0.055);
   --surface-2: rgba(255, 255, 255, 0.04);
-  --well: rgba(0, 0, 0, 0.22);
+  --well: rgba(0, 0, 0, 0.38);
   --stroke: rgba(255, 255, 255, 0.1);
+  --stroke-strong: rgba(255, 255, 255, 0.18);
   --control: rgba(255, 255, 255, 0.08);
   --control-hover: rgba(255, 255, 255, 0.13);
-  --tile: rgba(58, 58, 62, 0.78);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --tile: rgba(46, 46, 51, 0.96);
+  --text: #f5f5f7;
+  --text-2: #c9c9cf;
+  --shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+:root[data-material='acrylic'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 * {
@@ -102,6 +121,8 @@ body {
 
 #app {
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 button,
