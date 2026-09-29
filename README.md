@@ -36,3 +36,7 @@ Then run `dist/ScreenStitch.exe`.
 | `crates/platform` | Monitor detection, EDID, settings file, start with Windows. |
 | `crates/tray` | `ScreenStitch.exe`: tray icon and the mouse hook. |
 | `settings` | The settings window (Tauri + Svelte). |
+
+## License
+
+ScreenStitch is free software, licensed under the [GNU General Public License v3.0](LICENSE).
