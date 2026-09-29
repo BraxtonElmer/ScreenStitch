@@ -14,13 +14,13 @@ jobs:
   release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -48,10 +48,20 @@ jobs:
           $delimiter = [guid]::NewGuid()
           "body<<$delimiter`n$($section.Groups[1].Value.Trim())`n$delimiter" >> $env:GITHUB_OUTPUT
 
+      # Re-running a release replaces its unpublished draft instead of adding a second one.
+      - name: Remove an old draft of this release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $drafts = gh release list --json tagName,isDraft | ConvertFrom-Json | Where-Object { $_.isDraft -and $_.tagName -eq $tag }
+          if ($drafts) { gh release delete $tag --yes }
+
       - name: Build, sign and draft the release
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
@@ -62,14 +72,32 @@ jobs:
           releaseDraft: true
           includeUpdaterJson: true
 
-      - name: Add a portable zip
+      - name: Add a portable zip and download links
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          NOTES: ${{ steps.notes.outputs.body }}
         run: |
-          $name = "ScreenStitch-${{ github.ref_name }}-portable-x64"
+          $tag = '${{ github.ref_name }}'
+          $version = $tag.TrimStart('v')
+          $name = "ScreenStitch-$tag-portable-x64"
           New-Item -ItemType Directory $name | Out-Null
           Copy-Item target/release/screenstitch-tray.exe "$name/ScreenStitch.exe"
           Copy-Item target/release/screenstitch-settings.exe, LICENSE $name
           Compress-Archive $name "$name.zip"
-          gh release upload '${{ github.ref_name }}' "$name.zip" --clobber
+          gh release upload $tag "$name.zip" --clobber
+
+          # Added after the build so the update popup shows only the changelog.
+          $base = "https://github.com/${{ github.repository }}/releases/download/$tag"
+          $download = @(
+            '## Download'
+            ''
+            "**[Download the installer]($base/ScreenStitch_${version}_x64-setup.exe)** (recommended), or the [portable zip]($base/$name.zip) if you'd rather not install anything."
+            ''
+            'The `latest.json` and `.sig` files are used by the in-app updater.'
+            ''
+            '## What''s new'
+            ''
+          ) -join "`n"
+          Set-Content notes.md ($download + $env:NOTES) -Encoding utf8
+          gh release edit $tag --notes-file notes.md
