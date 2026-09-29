@@ -1,0 +1,8 @@
+[package]
+name = "screenstitch-core"
+description = "Platform-free geometry, physical layout and cursor-crossing engine for ScreenStitch"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
