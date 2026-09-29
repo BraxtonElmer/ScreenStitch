@@ -36,6 +36,10 @@ const TIMER_REDETECT: usize = 1;
 /// Once a second: look for a fullscreen game (the hook is removed while one is in
 /// front) and check the hook is still alive.
 const TIMER_TICK: usize = 2;
+/// Look for a new version a minute after starting, then once a day.
+const TIMER_UPDATE: usize = 3;
+const FIRST_UPDATE_CHECK_MS: u32 = 60_000;
+const UPDATE_CHECK_EVERY_MS: u32 = 24 * 60 * 60 * 1000;
 const HOTKEY_TOGGLE: i32 = 1;
 
 const CMD_OPEN: usize = 10;
@@ -101,6 +105,7 @@ pub fn run(open_settings_now: bool) {
     unsafe {
         RegisterHotKey(hwnd, HOTKEY_TOGGLE, MOD_CONTROL | MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, u32::from(b'S'));
         SetTimer(hwnd, TIMER_TICK, 1000, None);
+        SetTimer(hwnd, TIMER_UPDATE, FIRST_UPDATE_CHECK_MS, None);
     }
     with_app(|app| {
         app.redetect();
@@ -123,9 +128,19 @@ pub fn run(open_settings_now: bool) {
 
 /// Start the settings window (it focuses an already open one by itself).
 pub fn open_settings() {
+    run_settings(&[]);
+}
+
+/// The update check lives in the settings app, which has the updater built in;
+/// it only shows a window when there is a new version.
+fn check_for_update() {
+    run_settings(&["--check-update"]);
+}
+
+fn run_settings(args: &[&str]) {
     let Ok(exe) = std::env::current_exe() else { return };
     let settings = exe.with_file_name("screenstitch-settings.exe");
-    let _ = std::process::Command::new(settings).spawn();
+    let _ = std::process::Command::new(settings).args(args).spawn();
 }
 
 impl App {
@@ -294,6 +309,13 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: 
         WM_TIMER if wparam == TIMER_TICK => {
             with_app(App::check_fullscreen);
             hook::watchdog();
+            0
+        }
+        WM_TIMER if wparam == TIMER_UPDATE => {
+            unsafe { SetTimer(hwnd, TIMER_UPDATE, UPDATE_CHECK_EVERY_MS, None) };
+            if with_app(|a| a.config.check_updates).unwrap_or(false) {
+                check_for_update();
+            }
             0
         }
         WM_TIMER if wparam == TIMER_REDETECT => {

@@ -46,6 +46,7 @@ pub struct Screen {
 pub struct State {
     enabled: bool,
     pause_in_fullscreen: bool,
+    check_updates: bool,
     start_with_windows: bool,
     appearance: Appearance,
     system_accent: String,
@@ -99,6 +100,7 @@ pub fn get_state() -> State {
     State {
         enabled: config.enabled,
         pause_in_fullscreen: config.pause_in_fullscreen,
+        check_updates: config.check_updates,
         start_with_windows: autostart::is_enabled(),
         appearance: config.appearance.clone(),
         system_accent: system::system_accent(),
@@ -165,6 +167,19 @@ pub fn set_enabled(on: bool) -> Result<(), String> {
 #[tauri::command]
 pub fn set_pause_in_fullscreen(on: bool) -> Result<(), String> {
     update(|c| c.pause_in_fullscreen = on)
+}
+
+#[tauri::command]
+pub fn set_check_updates(on: bool) -> Result<(), String> {
+    update(|c| c.check_updates = on)
+}
+
+/// Why this window was opened: "settings" or "update" (the daily check).
+pub struct LaunchMode(pub &'static str);
+
+#[tauri::command]
+pub fn launch_mode(mode: tauri::State<'_, LaunchMode>) -> &'static str {
+    mode.0
 }
 
 #[tauri::command]

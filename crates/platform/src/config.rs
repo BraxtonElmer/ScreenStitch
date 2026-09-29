@@ -15,6 +15,9 @@ pub struct Config {
     /// Step aside while a fullscreen game or presentation is in front.
     #[serde(default = "yes")]
     pub pause_in_fullscreen: bool,
+    /// Look for a new version about once a day.
+    #[serde(default = "yes")]
+    pub check_updates: bool,
     #[serde(default)]
     pub appearance: Appearance,
     #[serde(default)]
@@ -66,6 +69,7 @@ impl Default for Config {
             version: 1,
             enabled: true,
             pause_in_fullscreen: true,
+            check_updates: true,
             appearance: Appearance::default(),
             profiles: BTreeMap::new(),
         }

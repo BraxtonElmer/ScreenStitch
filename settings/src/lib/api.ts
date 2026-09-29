@@ -22,6 +22,7 @@ export type Appearance = { theme: Theme; accent: string; material: Material };
 export type State = {
   enabled: boolean;
   pauseInFullscreen: boolean;
+  checkUpdates: boolean;
   startWithWindows: boolean;
   appearance: Appearance;
   systemAccent: string;
@@ -39,6 +40,8 @@ export const api = {
   autoLayout: () => invoke<Desk[]>('auto_layout'),
   setEnabled: (on: boolean) => invoke<void>('set_enabled', { on }),
   setPauseInFullscreen: (on: boolean) => invoke<void>('set_pause_in_fullscreen', { on }),
+  setCheckUpdates: (on: boolean) => invoke<void>('set_check_updates', { on }),
+  launchMode: () => invoke<'settings' | 'update'>('launch_mode'),
   setStartWithWindows: (on: boolean) => invoke<boolean>('set_start_with_windows', { on }),
   setAppearance: (appearance: Appearance) => invoke<void>('set_appearance', { appearance }),
   applyMaterial: (material: Material, dark: boolean) => invoke<Material>('apply_material', { material, dark }),

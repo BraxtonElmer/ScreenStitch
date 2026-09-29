@@ -7,6 +7,9 @@
   import Switch from './lib/Switch.svelte';
   import Segmented from './lib/Segmented.svelte';
   import TitleBar from './lib/TitleBar.svelte';
+  import UpdatePanel from './lib/UpdatePanel.svelte';
+  import { exit } from '@tauri-apps/plugin-process';
+  import { findUpdate, type Update } from './lib/update';
 
   let st = $state<State | null>(null);
   let desk = $state<DeskRect[]>([]);
@@ -70,11 +73,30 @@
     }
   }
 
+  // ---- updates ----
+
+  // "update": opened by the tray app's daily check; only shown if there is one.
+  let mode = $state<'settings' | 'update'>('settings');
+  let available = $state<Update | null>(null);
+  let upToDate = $state(false);
+
+  async function checkNow() {
+    upToDate = false;
+    available = await findUpdate();
+    upToDate = !available;
+  }
+
   onMount(async () => {
+    mode = await api.launchMode();
     await load();
+    if (mode === 'update') {
+      available = st?.checkUpdates ? await findUpdate() : null;
+      if (!available) return exit(0);
+    }
     await tick();
     await getCurrentWindow().show();
     await getCurrentWindow().setFocus();
+    if (mode === 'settings' && st?.checkUpdates) available = await findUpdate();
   });
 
   // ---- layout edits: every change is undoable and applied live ----
@@ -155,6 +177,12 @@
     await api.setPauseInFullscreen(on).catch((e) => (error = String(e)));
   }
 
+  async function setUpdates(on: boolean) {
+    if (!st) return;
+    st.checkUpdates = on;
+    await api.setCheckUpdates(on).catch((e) => (error = String(e)));
+  }
+
   async function setStartup(on: boolean) {
     if (!st) return;
     try {
@@ -200,7 +228,9 @@
 <svelte:window onkeydown={keydown} />
 
 <TitleBar />
-{#if st}
+{#if st && mode === 'update' && available}
+  <UpdatePanel update={available} current={st.version} variant="window" onlater={() => exit(0)} />
+{:else if st}
   <main>
     <header>
       <div class="titles">
@@ -216,6 +246,10 @@
         <span>{error}</span>
         <button class="link" onclick={() => (error = '')}>Dismiss</button>
       </div>
+    {/if}
+
+    {#if available}
+      <UpdatePanel update={available} current={st.version} variant="banner" onlater={() => (available = null)} />
     {/if}
 
     <div class="grid">
@@ -333,6 +367,13 @@
             </div>
             <Switch checked={st.pauseInFullscreen} label="Pause in fullscreen games" onchange={setPause} />
           </div>
+          <div class="row">
+            <div class="text">
+              <span>Check for updates</span>
+              <span class="muted small">Asks before installing anything</span>
+            </div>
+            <Switch checked={st.checkUpdates} label="Check for updates automatically" onchange={setUpdates} />
+          </div>
           <div class="row stack">
             <span>Appearance</span>
             <Segmented
@@ -386,6 +427,11 @@
 
     <footer class="muted">
       <span>ScreenStitch {st.version} · Free and open source</span>
+      {#if upToDate}
+        <span>You have the latest version.</span>
+      {:else if !available}
+        <button class="link" onclick={checkNow}>Check for updates now</button>
+      {/if}
       <span class="spacer"></span>
       <button class="link" onclick={() => api.open('source')}>Source code</button>
       <button class="link" onclick={() => api.open('issues')}>Report a problem</button>
