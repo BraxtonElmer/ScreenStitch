@@ -10,7 +10,7 @@ use std::ptr::null_mut;
 use screenstitch_core::{Action, Engine, Point, RectI};
 use windows_sys::Win32::Foundation::{LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
-use windows_sys::Win32::System::SystemInformation::GetTickCount64;
+use windows_sys::Win32::System::SystemInformation::{GetTickCount, GetTickCount64};
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CURSOR_SHOWING, CURSORINFO, CallNextHookEx, ClipCursor, GetClipCursor, GetCursorInfo, GetCursorPos,
@@ -29,6 +29,10 @@ struct State {
     fullscreen: (u64, bool),
     /// The clip rectangle we set last, so we never undo one a game set.
     managed_clip: Option<RectI>,
+    /// Where the cursor was at the last event we saw, and when (event time, ms).
+    /// Lets the watchdog notice when Windows has quietly stopped calling us.
+    last_point: Point,
+    last_time: u32,
 }
 
 thread_local! {
@@ -41,7 +45,14 @@ pub fn start(engine: Engine, pause_in_fullscreen: bool) {
     release_clip();
     let mut engine = engine;
     engine.resync(cursor_pos());
-    STATE.with(|s| *s.borrow_mut() = Some(State { engine, pause_in_fullscreen, fullscreen: (0, false), managed_clip: None }));
+    STATE.with(|s| *s.borrow_mut() = Some(State {
+            engine,
+            pause_in_fullscreen,
+            fullscreen: (0, false),
+            managed_clip: None,
+            last_point: cursor_pos(),
+            last_time: unsafe { GetTickCount() },
+        }));
     HOOK.with(|h| {
         let mut h = h.borrow_mut();
         if h.is_null() {
@@ -61,6 +72,39 @@ pub fn stop() {
     });
     release_clip();
     STATE.with(|s| *s.borrow_mut() = None);
+}
+
+/// Called about once a second. Windows silently removes a low-level hook it
+/// considers slow (for example while the PC is stalled); if that happens the
+/// cursor could stay confined to one screen. When the cursor has moved but no
+/// event reached us for a while, reinstall the hook and free the cursor.
+pub fn watchdog() {
+    let installed = HOOK.with(|h| !h.borrow().is_null());
+    if !installed {
+        return;
+    }
+    let now_pos = cursor_pos();
+    let stale = STATE.with(|s| {
+        let Ok(mut s) = s.try_borrow_mut() else { return false };
+        let Some(st) = s.as_mut() else { return false };
+        let quiet_ms = unsafe { GetTickCount() }.wrapping_sub(st.last_time);
+        if now_pos == st.last_point || quiet_ms < 1000 {
+            return false;
+        }
+        st.drop_clip();
+        st.engine.resync(now_pos);
+        st.last_point = now_pos;
+        true
+    });
+    if stale {
+        HOOK.with(|h| {
+            let mut h = h.borrow_mut();
+            unsafe {
+                UnhookWindowsHookEx(*h);
+                *h = SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_proc), GetModuleHandleW(std::ptr::null()), 0);
+            }
+        });
+    }
 }
 
 /// Drop our cursor confinement (only if it is still ours).
@@ -86,6 +130,7 @@ unsafe extern "system" fn mouse_proc(code: i32, wparam: WPARAM, lparam: LPARAM) 
         let handled = STATE.with(|s| {
             let Ok(mut s) = s.try_borrow_mut() else { return false };
             let Some(st) = s.as_mut() else { return false };
+            st.last_time = ms.time;
             st.on_move(Point::new(ms.pt.x, ms.pt.y), from_pen_or_touch)
         });
         if handled {
@@ -97,6 +142,7 @@ unsafe extern "system" fn mouse_proc(code: i32, wparam: WPARAM, lparam: LPARAM) 
 
 impl State {
     fn on_move(&mut self, p: Point, from_pen_or_touch: bool) -> bool {
+        self.last_point = p;
         // Fast path: moving around inside the current screen.
         if let Some(r) = self.engine.current_rect()
             && inside_away_from_edges(&r, p)
@@ -123,8 +169,15 @@ impl State {
                 false
             }
             Action::Move { to, clip } => {
-                self.set_clip(clip);
-                unsafe { SetCursorPos(to.x, to.y) };
+                // Windows refuses both calls while an app running as administrator
+                // is in front. Swallowing the move then would leave the cursor stuck
+                // at the edge, so let Windows handle it the plain way instead.
+                if !self.set_clip(clip) || unsafe { SetCursorPos(to.x, to.y) } == 0 {
+                    self.drop_clip();
+                    self.engine.resync(p);
+                    return false;
+                }
+                self.last_point = to;
                 true
             }
         }
@@ -158,10 +211,11 @@ impl State {
         }
     }
 
-    fn set_clip(&mut self, r: RectI) {
+    fn set_clip(&mut self, r: RectI) -> bool {
         let rect = RECT { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
-        unsafe { ClipCursor(&rect) };
-        self.managed_clip = Some(r);
+        let ok = unsafe { ClipCursor(&rect) } != 0;
+        self.managed_clip = ok.then_some(r);
+        ok
     }
 
     fn drop_clip(&mut self) {

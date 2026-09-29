@@ -33,8 +33,9 @@ use crate::{fullscreen, hook, icon, overlay};
 
 const WM_TRAY: u32 = WM_APP + 1;
 const TIMER_REDETECT: usize = 1;
-/// How often to look for a fullscreen game (the hook is removed while one is in front).
-const TIMER_FULLSCREEN: usize = 2;
+/// Once a second: look for a fullscreen game (the hook is removed while one is in
+/// front) and check the hook is still alive.
+const TIMER_TICK: usize = 2;
 const HOTKEY_TOGGLE: i32 = 1;
 
 const CMD_OPEN: usize = 10;
@@ -99,7 +100,7 @@ pub fn run(open_settings_now: bool) {
     });
     unsafe {
         RegisterHotKey(hwnd, HOTKEY_TOGGLE, MOD_CONTROL | MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, u32::from(b'S'));
-        SetTimer(hwnd, TIMER_FULLSCREEN, 1000, None);
+        SetTimer(hwnd, TIMER_TICK, 1000, None);
     }
     with_app(|app| {
         app.redetect();
@@ -290,8 +291,9 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: 
             }
             1
         }
-        WM_TIMER if wparam == TIMER_FULLSCREEN => {
+        WM_TIMER if wparam == TIMER_TICK => {
             with_app(App::check_fullscreen);
+            hook::watchdog();
             0
         }
         WM_TIMER if wparam == TIMER_REDETECT => {
