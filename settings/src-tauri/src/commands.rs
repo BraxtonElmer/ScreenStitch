@@ -184,6 +184,13 @@ pub fn set_appearance(appearance: Appearance) -> Result<(), String> {
     c.save().map_err(|e| format!("Couldn't save settings: {e}"))
 }
 
+/// Frosted glass, Mica or solid, tinted for the current light/dark theme.
+/// Returns the material the window actually got.
+#[tauri::command]
+pub fn apply_material(window: tauri::WebviewWindow, material: String, dark: bool) -> String {
+    crate::material::apply(&window, &material, dark).to_string()
+}
+
 #[tauri::command]
 pub fn set_alignment_line(on: bool) -> bool {
     tray::post(MSG_ALIGNMENT_LINE, usize::from(on))

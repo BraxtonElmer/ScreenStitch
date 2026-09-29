@@ -16,7 +16,8 @@ export type Screen = {
 };
 
 export type Theme = 'system' | 'light' | 'dark';
-export type Appearance = { theme: Theme; accent: string };
+export type Material = 'acrylic' | 'mica' | 'solid';
+export type Appearance = { theme: Theme; accent: string; material: Material };
 
 export type State = {
   enabled: boolean;
@@ -40,6 +41,7 @@ export const api = {
   setPauseInFullscreen: (on: boolean) => invoke<void>('set_pause_in_fullscreen', { on }),
   setStartWithWindows: (on: boolean) => invoke<boolean>('set_start_with_windows', { on }),
   setAppearance: (appearance: Appearance) => invoke<void>('set_appearance', { appearance }),
+  applyMaterial: (material: Material, dark: boolean) => invoke<Material>('apply_material', { material, dark }),
   setAlignmentLine: (on: boolean) => invoke<boolean>('set_alignment_line', { on }),
   open: (which: 'source' | 'issues' | 'folder') => invoke<void>('open_link', { which }),
 };

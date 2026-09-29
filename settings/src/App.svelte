@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { getCurrentWindow } from '@tauri-apps/api/window';
-  import { api, type Desk as DeskRect, type State, type Theme } from './lib/api';
+  import { api, type Desk as DeskRect, type Material, type State, type Theme } from './lib/api';
   import { alignRow, diagonalInches, textOn, withDiagonal, type Align } from './lib/geometry';
   import Desk from './lib/Desk.svelte';
   import Switch from './lib/Switch.svelte';
@@ -39,17 +39,22 @@
           : `The cursor crosses at the right height between all ${count} screens.`,
   );
 
-  // Theme and accent: applied to the page and to the window frame (Mica tint, title bar).
+  // Theme, accent and window material: applied to the page and to the window
+  // itself (glass tint, title bar).
   $effect(() => {
     if (!st) return;
     const theme = st.appearance.theme;
+    const dark = theme === 'system' ? systemDark : theme === 'dark';
     const root = document.documentElement;
-    root.dataset.theme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
-    root.classList.toggle('mica', st.mica);
+    root.dataset.theme = dark ? 'dark' : 'light';
     root.style.setProperty('--accent', accent);
     root.style.setProperty('--on-accent', textOn(accent));
     getCurrentWindow()
       .setTheme(theme === 'system' ? null : theme)
+      .catch(() => {});
+    api
+      .applyMaterial(st.appearance.material, dark)
+      .then((m) => (root.dataset.material = m))
       .catch(() => {});
   });
 
@@ -161,6 +166,12 @@
   async function setTheme(theme: Theme) {
     if (!st) return;
     st.appearance.theme = theme;
+    await api.setAppearance({ ...st.appearance });
+  }
+
+  async function setMaterial(material: Material) {
+    if (!st) return;
+    st.appearance.material = material;
     await api.setAppearance({ ...st.appearance });
   }
 
@@ -316,12 +327,12 @@
           <div class="row">
             <div class="text">
               <span>Pause in fullscreen games</span>
-              <span class="muted small">Steps aside while a game or presentation is in front</span>
+              <span class="muted small">Fully off while a game is in front</span>
             </div>
             <Switch checked={st.pauseInFullscreen} label="Pause in fullscreen games" onchange={setPause} />
           </div>
           <div class="row stack">
-            <span>Theme</span>
+            <span>Appearance</span>
             <Segmented
               label="Theme"
               value={st.appearance.theme}
@@ -331,6 +342,16 @@
                 { value: 'dark', label: 'Dark' },
               ]}
               onchange={setTheme}
+            />
+            <Segmented
+              label="Window background"
+              value={st.appearance.material}
+              options={[
+                { value: 'acrylic', label: 'Frosted glass' },
+                ...(st.mica ? [{ value: 'mica' as Material, label: 'Mica' }] : []),
+                { value: 'solid', label: 'Solid' },
+              ]}
+              onchange={setMaterial}
             />
           </div>
           <div class="row stack">

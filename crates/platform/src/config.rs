@@ -23,16 +23,19 @@ pub struct Config {
 
 /// Settings window look. The tray app ignores it.
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct Appearance {
     /// "system", "light" or "dark".
     pub theme: String,
     /// Accent colour as `#rrggbb`; empty = the Windows accent colour.
     pub accent: String,
+    /// Window background: "acrylic" (frosted glass), "mica" or "solid".
+    pub material: String,
 }
 
 impl Default for Appearance {
     fn default() -> Self {
-        Self { theme: "system".into(), accent: String::new() }
+        Self { theme: "system".into(), accent: String::new(), material: "acrylic".into() }
     }
 }
 

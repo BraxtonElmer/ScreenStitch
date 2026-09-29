@@ -47,17 +47,41 @@
   color-scheme: dark;
 }
 
-/* On Windows 11 the window itself is Mica; surfaces go slightly see-through. */
-:root.mica {
+/* Mica: the window itself is tinted by the wallpaper; surfaces go slightly see-through. */
+:root[data-material='mica'] {
   --bg: transparent;
   --surface: rgba(255, 255, 255, 0.72);
   --surface-2: rgba(255, 255, 255, 0.5);
   --well: rgba(0, 0, 0, 0.035);
 }
-:root.mica[data-theme='dark'] {
+:root[data-material='mica'][data-theme='dark'] {
   --surface: rgba(255, 255, 255, 0.05);
   --surface-2: rgba(255, 255, 255, 0.035);
   --well: rgba(0, 0, 0, 0.18);
+}
+
+/* Frosted glass: whatever is behind the window shows through, blurred.
+   Cards are thin panes of lighter glass with a crisp edge; no gradients. */
+:root[data-material='acrylic'] {
+  --bg: transparent;
+  --surface: rgba(255, 255, 255, 0.5);
+  --surface-2: rgba(255, 255, 255, 0.35);
+  --well: rgba(255, 255, 255, 0.28);
+  --stroke: rgba(255, 255, 255, 0.7);
+  --control: rgba(255, 255, 255, 0.7);
+  --control-hover: rgba(255, 255, 255, 0.9);
+  --tile: rgba(255, 255, 255, 0.82);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+:root[data-material='acrylic'][data-theme='dark'] {
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --well: rgba(0, 0, 0, 0.22);
+  --stroke: rgba(255, 255, 255, 0.1);
+  --control: rgba(255, 255, 255, 0.08);
+  --control-hover: rgba(255, 255, 255, 0.13);
+  --tile: rgba(58, 58, 62, 0.78);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 * {
