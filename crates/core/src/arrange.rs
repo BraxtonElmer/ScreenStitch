@@ -103,7 +103,8 @@ fn place_next_to(pa: &RectI, a: &RectF, pb: &RectI, w: f64, h: f64) -> RectF {
         RectF::new(x, y, w, h)
     } else if stacked && x_overlap > 0 {
         let y = if pb.top >= pa.bottom - ALIGN_PX { a.bottom() } else { a.y - h };
-        let x = align_centre_default(pa.left, pa.right, pb.left, pb.right, a.x, a.w, w, mmpp_x, w / f64::from(pb.width()));
+        let x =
+            align_centre_default(pa.left, pa.right, pb.left, pb.right, a.x, a.w, w, mmpp_x, w / f64::from(pb.width()));
         RectF::new(x, y, w, h)
     } else if stacked {
         // Diagonal: stack it, keeping Windows' horizontal offset.
@@ -133,7 +134,17 @@ fn align(a0: i32, a1: i32, b0: i32, b1: i32, am0: f64, am_len: f64, len: f64, mm
 /// Position along a horizontal shared edge (stacked screens): centred unless
 /// the user clearly offset them in Windows.
 #[allow(clippy::too_many_arguments)]
-fn align_centre_default(a0: i32, a1: i32, b0: i32, b1: i32, am0: f64, am_len: f64, len: f64, mmpp: f64, mmpp_b: f64) -> f64 {
+fn align_centre_default(
+    a0: i32,
+    a1: i32,
+    b0: i32,
+    b1: i32,
+    am0: f64,
+    am_len: f64,
+    len: f64,
+    mmpp: f64,
+    mmpp_b: f64,
+) -> f64 {
     if (a0 - b0).abs() <= ALIGN_PX && (a1 - b1).abs() > ALIGN_PX {
         am0 // left edges lined up on purpose
     } else if (a1 - b1).abs() <= ALIGN_PX && (a0 - b0).abs() > ALIGN_PX {
@@ -198,7 +209,14 @@ mod tests {
     /// screen can be reached and every edge crossing lands on a real screen.
     #[test]
     fn random_arrangements_never_trap_the_cursor() {
-        let sizes = [(1920, 1080, 527.0, 296.0), (3840, 2160, 597.0, 336.0), (2560, 1440, 597.0, 336.0), (1080, 1920, 296.0, 527.0), (3440, 1440, 800.0, 335.0), (1366, 768, 344.0, 194.0)];
+        let sizes = [
+            (1920, 1080, 527.0, 296.0),
+            (3840, 2160, 597.0, 336.0),
+            (2560, 1440, 597.0, 336.0),
+            (1080, 1920, 296.0, 527.0),
+            (3440, 1440, 800.0, 335.0),
+            (1366, 768, 344.0, 194.0),
+        ];
         let mut rng = Rng(0x5eed_1234_abcd_ef01);
         for _ in 0..2000 {
             let n = rng.range(2, 6) as usize;
@@ -212,10 +230,22 @@ mod tests {
                     // Attach to a random existing screen on a random side, Windows-style (touching).
                     let base = px[rng.range(0, px.len() as i32) as usize];
                     let cand = match rng.range(0, 4) {
-                        0 => { let y = rng.range(base.top - h + 1, base.bottom); RectI::new(base.right, y, base.right + w, y + h) }
-                        1 => { let y = rng.range(base.top - h + 1, base.bottom); RectI::new(base.left - w, y, base.left, y + h) }
-                        2 => { let x = rng.range(base.left - w + 1, base.right); RectI::new(x, base.bottom, x + w, base.bottom + h) }
-                        _ => { let x = rng.range(base.left - w + 1, base.right); RectI::new(x, base.top - h, x + w, base.top) }
+                        0 => {
+                            let y = rng.range(base.top - h + 1, base.bottom);
+                            RectI::new(base.right, y, base.right + w, y + h)
+                        }
+                        1 => {
+                            let y = rng.range(base.top - h + 1, base.bottom);
+                            RectI::new(base.left - w, y, base.left, y + h)
+                        }
+                        2 => {
+                            let x = rng.range(base.left - w + 1, base.right);
+                            RectI::new(x, base.bottom, x + w, base.bottom + h)
+                        }
+                        _ => {
+                            let x = rng.range(base.left - w + 1, base.right);
+                            RectI::new(x, base.top - h, x + w, base.top)
+                        }
                     };
                     if px.iter().any(|o| overlaps(o, &cand)) {
                         continue;

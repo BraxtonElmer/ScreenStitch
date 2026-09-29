@@ -96,9 +96,7 @@ pub struct Layout {
 
 impl Layout {
     pub fn new(monitors: Vec<Monitor>) -> Self {
-        let links = (0..monitors.len())
-            .map(|i| Side::ALL.map(|side| build_side(&monitors, i, side)))
-            .collect();
+        let links = (0..monitors.len()).map(|i| Side::ALL.map(|side| build_side(&monitors, i, side))).collect();
         Self { monitors, links }
     }
 
@@ -123,16 +121,13 @@ impl Layout {
         let c = if side.is_vertical() { p.y } else { p.x }.clamp(p0, p1 - 1);
         let mm = a.px_to_mm_along(side, c);
 
-        let link = links
-            .iter()
-            .find(|l| mm >= l.from_mm && mm < l.to_mm)
-            .or_else(|| {
-                links.iter().min_by(|x, y| {
-                    let dx = dist_to_range(mm, x.from_mm, x.to_mm);
-                    let dy = dist_to_range(mm, y.from_mm, y.to_mm);
-                    dx.total_cmp(&dy)
-                })
-            })?;
+        let link = links.iter().find(|l| mm >= l.from_mm && mm < l.to_mm).or_else(|| {
+            links.iter().min_by(|x, y| {
+                let dx = dist_to_range(mm, x.from_mm, x.to_mm);
+                let dy = dist_to_range(mm, y.from_mm, y.to_mm);
+                dx.total_cmp(&dy)
+            })
+        })?;
 
         let b = &self.monitors[link.target];
         let half = b.along_mmpp(side) * 0.5;
@@ -256,8 +251,7 @@ fn build_side(ms: &[Monitor], i: usize, side: Side) -> Vec<Link> {
 
     // Pieces facing nothing borrow the nearest covered piece's screen; the
     // clamp range then lands the cursor on that screen's closest edge point.
-    let covered: Vec<(f64, f64, usize)> =
-        pieces.iter().filter_map(|&(s, e, k)| k.map(|k| (s, e, k))).collect();
+    let covered: Vec<(f64, f64, usize)> = pieces.iter().filter_map(|&(s, e, k)| k.map(|k| (s, e, k))).collect();
     let mut links: Vec<Link> = Vec::new();
     for &(s, e, k) in &pieces {
         let k = k.unwrap_or_else(|| {

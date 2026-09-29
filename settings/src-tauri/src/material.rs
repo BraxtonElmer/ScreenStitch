@@ -18,9 +18,7 @@ pub fn apply(window: &WebviewWindow, wanted: &str, dark: bool) -> &'static str {
                 .color(if dark { Color(20, 20, 23, 210) } else { Color(214, 214, 218, 200) })
                 .build(),
         )),
-        "mica" if system::supports_mica() => {
-            Some(("mica", EffectsBuilder::new().effect(Effect::Mica).build()))
-        }
+        "mica" if system::supports_mica() => Some(("mica", EffectsBuilder::new().effect(Effect::Mica).build())),
         _ => None,
     };
     if let Some((name, config)) = effects

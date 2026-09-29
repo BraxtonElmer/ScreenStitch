@@ -45,11 +45,8 @@ pub fn auto_rects(displays: &[Display]) -> Vec<RectF> {
 /// Store `rects` as this monitor set's profile (not yet written to disk).
 pub fn save_rects(config: &mut Config, displays: &[Display], rects: &[RectF]) {
     let key = config::profile_key(displays.iter().map(|d| d.id.as_str()));
-    let monitors = displays
-        .iter()
-        .zip(rects)
-        .map(|(d, r)| (d.id.clone(), DeskRect { x: r.x, y: r.y, w: r.w, h: r.h }))
-        .collect();
+    let monitors =
+        displays.iter().zip(rects).map(|(d, r)| (d.id.clone(), DeskRect { x: r.x, y: r.y, w: r.w, h: r.h })).collect();
     config.profiles.insert(key, Profile { monitors });
 }
 

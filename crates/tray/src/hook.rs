@@ -45,14 +45,16 @@ pub fn start(engine: Engine, pause_in_fullscreen: bool) {
     release_clip();
     let mut engine = engine;
     engine.resync(cursor_pos());
-    STATE.with(|s| *s.borrow_mut() = Some(State {
+    STATE.with(|s| {
+        *s.borrow_mut() = Some(State {
             engine,
             pause_in_fullscreen,
             fullscreen: (0, false),
             managed_clip: None,
             last_point: cursor_pos(),
             last_time: unsafe { GetTickCount() },
-        }));
+        })
+    });
     HOOK.with(|h| {
         let mut h = h.borrow_mut();
         if h.is_null() {

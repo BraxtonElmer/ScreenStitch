@@ -43,12 +43,7 @@ impl RectI {
     }
 
     pub fn union(&self, o: &RectI) -> RectI {
-        RectI::new(
-            self.left.min(o.left),
-            self.top.min(o.top),
-            self.right.max(o.right),
-            self.bottom.max(o.bottom),
-        )
+        RectI::new(self.left.min(o.left), self.top.min(o.top), self.right.max(o.right), self.bottom.max(o.bottom))
     }
 }
 
