@@ -5,3 +5,4 @@ PLAN.md
 node_modules/
 settings/build/
 settings/src-tauri/gen/
+settings/src-tauri/binaries/

@@ -1,6 +1,9 @@
-# Builds ScreenStitch and puts a ready-to-run copy in dist/.
-#   ./scripts/build.ps1
-# Needs Rust (GNU or MSVC toolchain) and Node.js on PATH.
+# Builds ScreenStitch.
+#   ./scripts/build.ps1              ready-to-run copy in dist/
+#   ./scripts/build.ps1 -Installer   also the Windows installer (target/release/bundle/nsis)
+# Needs Rust and Node.js on PATH.
+
+param([switch]$Installer)
 
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
@@ -12,16 +15,22 @@ function Step([scriptblock]$run) {
 
 Push-Location settings
 if (-not (Test-Path node_modules)) { Step { npm ci } }
-Step { npm run build }
+if ($Installer) {
+    # Builds the page, the tray app and the settings app, then packs the installer.
+    Step { npm run tauri build }
+} else {
+    Step { npm run build }
+}
 Pop-Location
 
 Step { cargo build --release -p screenstitch -p screenstitch-settings }
 
 $dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Force $dist | Out-Null
-Copy-Item target/release/screenstitch.exe (Join-Path $dist 'ScreenStitch.exe') -Force
+Copy-Item target/release/screenstitch-tray.exe (Join-Path $dist 'ScreenStitch.exe') -Force
 Copy-Item target/release/screenstitch-settings.exe $dist -Force
 # Only present with the GNU toolchain; MSVC builds link WebView2 statically.
 if (Test-Path target/release/WebView2Loader.dll) { Copy-Item target/release/WebView2Loader.dll $dist -Force }
 
 Write-Host "Done: $dist\ScreenStitch.exe"
+if ($Installer) { Get-ChildItem target/release/bundle/nsis/*.exe | ForEach-Object { Write-Host "Installer: $($_.FullName)" } }

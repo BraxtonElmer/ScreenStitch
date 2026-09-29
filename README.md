@@ -25,10 +25,11 @@ turn ScreenStitch on or off at any time.
 Needs Rust and Node.js.
 
 ```powershell
-./scripts/build.ps1
+./scripts/build.ps1              # ready-to-run copy in dist/
+./scripts/build.ps1 -Installer   # also builds the Windows installer
 ```
 
-Then run `dist/ScreenStitch.exe`.
+Then run `dist/ScreenStitch.exe`, or the installer from `target/release/bundle/nsis/`.
 
 | Folder | What's in it |
 | --- | --- |

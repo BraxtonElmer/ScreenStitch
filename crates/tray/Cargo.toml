@@ -25,3 +25,9 @@ features = [
     "Win32_UI_Shell",
     "Win32_UI_WindowsAndMessaging",
 ]
+
+# Built as screenstitch-tray.exe and shipped as ScreenStitch.exe (the installer
+# renames it), so it never collides with the copy Tauri bundles next to the settings app.
+[[bin]]
+name = "screenstitch-tray"
+path = "src/main.rs"

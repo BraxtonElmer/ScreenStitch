@@ -1,13 +1,14 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "ScreenStitch",
+  "mainBinaryName": "screenstitch-settings",
   "version": "0.1.0",
   "identifier": "io.github.braxtonelmer.screenstitch",
   "build": {
     "frontendDist": "../build",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build && node scripts/prepare-sidecar.mjs"
   },
   "app": {
     "windows": [
@@ -30,7 +31,24 @@
     }
   },
   "bundle": {
-    "active": false,
-    "icon": ["icons/icon.ico", "icons/icon.png"]
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "externalBin": ["binaries/ScreenStitch"],
+    "publisher": "BraxtonElmer",
+    "copyright": "Copyright (C) 2026 BraxtonElmer",
+    "category": "Utility",
+    "license": "GPL-3.0-only",
+    "licenseFile": "../../LICENSE",
+    "shortDescription": "Lines up the cursor across monitors of different sizes",
+    "longDescription": "ScreenStitch connects monitors by their real, physical size so the cursor crosses between screens of different resolutions and scaling exactly where you expect.",
+    "homepage": "https://github.com/BraxtonElmer/ScreenStitch",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "installerHooks": "windows/hooks.nsh"
+      }
+    }
   }
 }
