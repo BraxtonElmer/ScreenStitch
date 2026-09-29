@@ -22,6 +22,9 @@
 
   const PAD = 36;
   const SNAP_PX = 10;
+  /** Stitches: short diagonal strokes across the seam, like thread. */
+  const STITCH_SPACING = 11;
+  const STITCH_HALF = 6;
 
   let width = $state(0);
   let height = $state(0);
@@ -41,6 +44,8 @@
   const box = $derived(bounds(desk));
 
   let drag: { i: number; px: number; py: number; start: Desk; moved: boolean } | null = null;
+  // Stitches are hidden while a screen is being moved and sewn back in once it's placed.
+  let dragging = $state(false);
 
   function down(e: PointerEvent, i: number) {
     if (e.button !== 0) return;
@@ -57,6 +62,7 @@
     if (!drag.moved) {
       if (Math.hypot(dx, dy) * view.scale < 3) return;
       drag.moved = true;
+      dragging = true;
       onbeforechange();
     }
     const m = { ...drag.start, x: drag.start.x + dx, y: drag.start.y + dy };
@@ -68,6 +74,7 @@
   function up() {
     if (drag?.moved) oncommit();
     drag = null;
+    dragging = false;
     frozen = null;
   }
 
@@ -114,15 +121,28 @@
         </button>
       {/each}
 
-      {#each seams as st, k (k)}
-        <div
+      {#each dragging ? [] : seams as st, k (k)}
+        {@const len = st.length * view.scale}
+        {@const count = Math.max(1, Math.floor(len / STITCH_SPACING))}
+        {@const step = len / count}
+        <svg
           class="stitch"
-          class:vertical={st.vertical}
-          style:left={px(st.x)}
-          style:top={px(st.y)}
-          style:width={st.vertical ? '12px' : px(st.length)}
-          style:height={st.vertical ? px(st.length) : '12px'}
-        ></div>
+          aria-hidden="true"
+          style:left="{st.vertical ? st.x * view.scale - STITCH_HALF : st.x * view.scale}px"
+          style:top="{st.vertical ? st.y * view.scale : st.y * view.scale - STITCH_HALF}px"
+          width={st.vertical ? STITCH_HALF * 2 : len}
+          height={st.vertical ? len : STITCH_HALF * 2}
+        >
+          {#each { length: count } as _, n (n)}
+            {@const c = step * (n + 0.5)}
+            {@const delay = `${Math.min(n * 14, 280)}ms`}
+            {#if st.vertical}
+              <line pathLength="1" style:--delay={delay} x1="1.5" y1={c + 2.5} x2={STITCH_HALF * 2 - 1.5} y2={c - 2.5} />
+            {:else}
+              <line pathLength="1" style:--delay={delay} x1={c - 2.5} y1={STITCH_HALF * 2 - 1.5} x2={c + 2.5} y2="1.5" />
+            {/if}
+          {/each}
+        </svg>
       {/each}
 
       {#if checking}
@@ -194,17 +214,33 @@
     font-size: 11px;
     color: var(--text-2);
   }
-  /* Short stitches across the seam, like thread joining two pieces. */
   .stitch {
     position: absolute;
     z-index: 2;
     pointer-events: none;
-    transform: translateY(-6px);
-    background: repeating-linear-gradient(to right, var(--accent) 0 3px, transparent 3px 10px);
+    overflow: visible;
   }
-  .stitch.vertical {
-    transform: translateX(-6px);
-    background: repeating-linear-gradient(to bottom, var(--accent) 0 3px, transparent 3px 10px);
+  /* A faint dark edge keeps each stitch crisp on top of the screens' borders. */
+  .stitch line {
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55));
+    /* Sewn in one stitch after another along the seam. */
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: sew 160ms cubic-bezier(0.2, 0, 0, 1) var(--delay) forwards;
+  }
+  @keyframes sew {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stitch line {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
   }
   .line {
     position: absolute;
