@@ -272,7 +272,7 @@
         {#if checking}
           <div class="banner info">
             <span class="swatch-line"></span>
-            <span>A line is now drawn across all your screens at the same height. If it looks broken where two screens meet, drag that screen here until the line looks straight.</span>
+            <span>A line is now drawn across all your screens at the same height. If it looks broken where two screens meet, move that screen here until the line looks straight. For small steps, click the screen and use the arrow keys.</span>
           </div>
         {:else if lostNames.length}
           <div class="banner warn">
@@ -285,7 +285,9 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 8h13M4.5 5v6M11.5 5v6" /></svg>
             {checking ? 'Done checking' : 'Check alignment'}
           </button>
-          <span class="spacer"></span>
+          <span class="tip muted">
+            <kbd>←↑→↓</kbd> nudge the selected screen 1 mm · <kbd>Shift</kbd> 10 mm
+          </span>
           <button class="btn" onclick={undo} disabled={history.length === 0}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9.5 2 6l3.5-3.5" /><path d="M2 6h8a4 4 0 0 1 0 8H8" /></svg>
             Undo
@@ -370,7 +372,6 @@
           <div class="row">
             <div class="text">
               <span>Check for updates</span>
-              <span class="muted small">Asks before installing anything</span>
             </div>
             <Switch checked={st.checkUpdates} label="Check for updates automatically" onchange={setUpdates} />
           </div>
@@ -524,6 +525,26 @@
   .spacer {
     flex: 1;
   }
+  .tip {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  kbd {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 4px;
+    margin: 0 1px;
+    border-radius: 4px;
+    border: 1px solid var(--stroke-strong);
+    background: var(--control);
+    font: 11px/16px var(--font);
+    text-align: center;
+    color: var(--text);
+  }
   aside {
     display: flex;
     flex-direction: column;
@@ -597,7 +618,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 0;
+    padding: 8px 0;
     border-bottom: 1px solid var(--stroke);
   }
   .row:last-child {
