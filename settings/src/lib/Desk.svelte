@@ -22,9 +22,34 @@
 
   const PAD = 36;
   const SNAP_PX = 10;
-  /** Stitches: short diagonal strokes across the seam, like thread. */
-  const STITCH_SPACING = 11;
+  /** The seam: one thread weaving through needle holes on both sides. */
+  const STITCH_SPACING = 9;
   const STITCH_HALF = 6;
+
+  /** Thread path and needle holes for a seam `len` px long, in the seam's own box. */
+  function wave(len: number, vertical: boolean) {
+    const count = Math.max(1, Math.floor((len - 8) / STITCH_SPACING));
+    const step = (len - 8) / count;
+    const holes = Array.from({ length: count + 1 }, (_, i) => ({
+      across: i % 2 === 0 ? 1.5 : STITCH_HALF * 2 - 1.5,
+      along: 4 + i * step,
+    }));
+    const pt = (across: number, along: number) => (vertical ? `${across} ${along}` : `${along} ${across}`);
+    let d = `M ${pt(holes[0].across, holes[0].along)}`;
+    for (let i = 1; i < holes.length; i++) {
+      const a = holes[i - 1];
+      const b = holes[i];
+      d += ` C ${pt(a.across, a.along + step / 2)} ${pt(b.across, b.along - step / 2)} ${pt(b.across, b.along)}`;
+    }
+    return {
+      d,
+      holes: holes.map((h, i) => ({
+        x: vertical ? h.across : h.along,
+        y: vertical ? h.along : h.across,
+        delay: `${Math.min(i * 12, 300)}ms`,
+      })),
+    };
+  }
 
   let width = $state(0);
   let height = $state(0);
@@ -123,8 +148,7 @@
 
       {#each dragging ? [] : seams as st, k (k)}
         {@const len = st.length * view.scale}
-        {@const count = Math.max(1, Math.floor(len / STITCH_SPACING))}
-        {@const step = len / count}
+        {@const thread = wave(len, st.vertical)}
         <svg
           class="stitch"
           aria-hidden="true"
@@ -133,14 +157,9 @@
           width={st.vertical ? STITCH_HALF * 2 : len}
           height={st.vertical ? len : STITCH_HALF * 2}
         >
-          {#each { length: count } as _, n (n)}
-            {@const c = step * (n + 0.5)}
-            {@const delay = `${Math.min(n * 14, 280)}ms`}
-            {#if st.vertical}
-              <line pathLength="1" style:--delay={delay} x1="1.5" y1={c + 2.5} x2={STITCH_HALF * 2 - 1.5} y2={c - 2.5} />
-            {:else}
-              <line pathLength="1" style:--delay={delay} x1={c - 2.5} y1={STITCH_HALF * 2 - 1.5} x2={c + 2.5} y2="1.5" />
-            {/if}
+          <path class="thread" pathLength="1" d={thread.d} />
+          {#each thread.holes as h, n (n)}
+            <circle class="hole" style:--delay={h.delay} cx={h.x} cy={h.y} r="1.5" />
           {/each}
         </svg>
       {/each}
@@ -220,24 +239,37 @@
     pointer-events: none;
     overflow: visible;
   }
-  /* A faint dark edge keeps each stitch crisp on top of the screens' borders. */
-  .stitch line {
+  /* The thread draws itself along the seam; a faint dark edge keeps it crisp
+     on top of the screens' borders. */
+  .thread {
+    fill: none;
     stroke: var(--accent);
-    stroke-width: 2;
+    stroke-width: 1.8;
     stroke-linecap: round;
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55));
-    /* Sewn in one stitch after another along the seam. */
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
-    animation: sew 160ms cubic-bezier(0.2, 0, 0, 1) var(--delay) forwards;
+    animation: sew 340ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  }
+  .hole {
+    fill: rgba(0, 0, 0, 0.75);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pop 160ms cubic-bezier(0.2, 0, 0, 1) var(--delay) both;
   }
   @keyframes sew {
     to {
       stroke-dashoffset: 0;
     }
   }
+  @keyframes pop {
+    from {
+      transform: scale(0);
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .stitch line {
+    .thread,
+    .hole {
       animation: none;
       stroke-dashoffset: 0;
     }
