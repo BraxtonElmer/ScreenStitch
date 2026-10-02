@@ -223,6 +223,7 @@ pub fn open_link(which: String) {
         "source" => system::open("https://github.com/BraxtonElmer/ScreenStitch"),
         "issues" => system::open("https://github.com/BraxtonElmer/ScreenStitch/issues"),
         "kofi" => system::open("https://ko-fi.com/akariyu"),
+        "author" => system::open("https://github.com/BraxtonElmer"),
         "folder" => {
             let dir = config::dir();
             let _ = std::fs::create_dir_all(&dir);

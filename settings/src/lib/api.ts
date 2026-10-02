@@ -47,5 +47,5 @@ export const api = {
   setAppearance: (appearance: Appearance) => invoke<void>('set_appearance', { appearance }),
   applyMaterial: (material: Material, dark: boolean) => invoke<Material>('apply_material', { material, dark }),
   setAlignmentLine: (on: boolean) => invoke<boolean>('set_alignment_line', { on }),
-  open: (which: 'source' | 'issues' | 'folder' | 'kofi') => invoke<void>('open_link', { which }),
+  open: (which: 'source' | 'issues' | 'folder' | 'kofi' | 'author') => invoke<void>('open_link', { which }),
 };

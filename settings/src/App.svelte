@@ -439,14 +439,18 @@
     </div>
 
     <footer class="muted">
-      <span>ScreenStitch {st.version} · Built by Braxton Elmer · Free and open source ·</span>
-      <button class="link kofi" onclick={() => api.open('kofi')}>Support on Ko-fi ♥</button>
-      {#if upToDate}
-        <span>You have the latest version.</span>
-      {:else if !available}
-        <button class="link" onclick={checkNow}>Check for updates now</button>
-      {/if}
+      <span class="credits">
+        ScreenStitch {st.version} · by
+        <button class="link" onclick={() => api.open('author')}>Braxton Elmer</button>
+        · Free and open source ·
+        <button class="link kofi" onclick={() => api.open('kofi')}>Support on Ko-fi ♥</button>
+      </span>
       <span class="spacer"></span>
+      {#if upToDate}
+        <span>You have the latest version</span>
+      {:else if !available}
+        <button class="link" onclick={checkNow}>Check for updates</button>
+      {/if}
       <button class="link" onclick={() => api.open('source')}>Source code</button>
       <button class="link" onclick={() => api.open('issues')}>Report a problem</button>
       <button class="link" onclick={() => api.open('folder')}>Settings folder</button>
@@ -709,5 +713,11 @@
   }
   footer .link {
     font-size: 12px;
+  }
+  .credits {
+    white-space: nowrap;
+  }
+  .kofi {
+    color: #ff5e5b;
   }
 </style>
