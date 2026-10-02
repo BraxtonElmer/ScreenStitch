@@ -159,7 +159,10 @@ impl App {
         }
         self.rects = rects;
         if self.config.enabled && !self.paused_for_fullscreen {
-            hook::start(Engine::new(layout(&self.displays, &self.rects)), self.config.pause_in_fullscreen);
+            hook::start(
+                Engine::new(layout(&self.displays, &self.rects, self.config.stop_at_gaps)),
+                self.config.pause_in_fullscreen,
+            );
         } else {
             hook::stop();
         }

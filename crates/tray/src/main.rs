@@ -70,7 +70,7 @@ fn list() {
         );
     }
     println!("alignment line at {:.0} mm", alignment_line_mm(&rects));
-    let lost = layout(&displays, &rects).unreachable();
+    let lost = layout(&displays, &rects, false).unreachable();
     if !lost.is_empty() {
         println!("warning: screens {lost:?} can't be reached from the first one");
     }

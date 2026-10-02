@@ -15,6 +15,10 @@ pub struct Config {
     /// Step aside while a fullscreen game or presentation is in front.
     #[serde(default = "yes")]
     pub pause_in_fullscreen: bool,
+    /// Treat parts of an edge with no screen beside them as walls instead of
+    /// sending the cursor to the nearest point of the next screen.
+    #[serde(default)]
+    pub stop_at_gaps: bool,
     /// Look for a new version about once a day.
     #[serde(default = "yes")]
     pub check_updates: bool,
@@ -32,7 +36,7 @@ pub struct Appearance {
     pub theme: String,
     /// Accent colour as `#rrggbb`; empty = the Windows accent colour.
     pub accent: String,
-    /// Window background: "acrylic" (frosted glass), "mica" or "solid".
+    /// Window background: "acrylic" (frosted glass) or "solid".
     pub material: String,
 }
 
@@ -70,6 +74,7 @@ impl Default for Config {
             enabled: true,
             pause_in_fullscreen: true,
             check_updates: true,
+            stop_at_gaps: false,
             appearance: Appearance::default(),
             profiles: BTreeMap::new(),
         }

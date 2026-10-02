@@ -77,6 +77,6 @@ pub fn alignment_line_mm(rects: &[RectF]) -> f64 {
     rects.iter().max_by(|a, b| a.h.total_cmp(&b.h)).map_or(0.0, |r| r.y + r.h / 2.0)
 }
 
-pub fn layout(displays: &[Display], rects: &[RectF]) -> Layout {
-    Layout::new(displays.iter().zip(rects).map(|(d, r)| Monitor::new(d.px, *r)).collect())
+pub fn layout(displays: &[Display], rects: &[RectF], stop_at_gaps: bool) -> Layout {
+    Layout::with_gaps(displays.iter().zip(rects).map(|(d, r)| Monitor::new(d.px, *r)).collect(), stop_at_gaps)
 }

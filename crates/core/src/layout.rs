@@ -92,12 +92,22 @@ pub struct Link {
 pub struct Layout {
     monitors: Vec<Monitor>,
     links: Vec<[Vec<Link>; 4]>,
+    stop_at_gaps: bool,
 }
 
 impl Layout {
+    /// Parts of an edge with no screen beside them lead to the nearest point
+    /// of the neighbouring screen, so the cursor never gets stuck.
     pub fn new(monitors: Vec<Monitor>) -> Self {
-        let links = (0..monitors.len()).map(|i| Side::ALL.map(|side| build_side(&monitors, i, side))).collect();
-        Self { monitors, links }
+        Self::with_gaps(monitors, false)
+    }
+
+    /// With `stop_at_gaps`, parts of an edge with no screen physically beside
+    /// them are walls instead, like the real gap on the desk.
+    pub fn with_gaps(monitors: Vec<Monitor>, stop_at_gaps: bool) -> Self {
+        let links =
+            (0..monitors.len()).map(|i| Side::ALL.map(|side| build_side(&monitors, i, side, !stop_at_gaps))).collect();
+        Self { monitors, links, stop_at_gaps }
     }
 
     pub fn monitors(&self) -> &[Monitor] {
@@ -121,8 +131,11 @@ impl Layout {
         let c = if side.is_vertical() { p.y } else { p.x }.clamp(p0, p1 - 1);
         let mm = a.px_to_mm_along(side, c);
 
-        let link = links.iter().find(|l| mm >= l.from_mm && mm < l.to_mm).or_else(|| {
-            links.iter().min_by(|x, y| {
+        let inside = links.iter().find(|l| mm >= l.from_mm && mm < l.to_mm);
+        let link = inside.or_else(|| {
+            // Rounding at the very ends of a link; never across a real gap when stopping there.
+            let slack = if self.stop_at_gaps { a.along_mmpp(side) } else { f64::INFINITY };
+            links.iter().filter(|l| dist_to_range(mm, l.from_mm, l.to_mm) <= slack).min_by(|x, y| {
                 let dx = dist_to_range(mm, x.from_mm, x.to_mm);
                 let dy = dist_to_range(mm, y.from_mm, y.to_mm);
                 dx.total_cmp(&dy)
@@ -200,7 +213,7 @@ struct Candidate {
     hi: f64,
 }
 
-fn build_side(ms: &[Monitor], i: usize, side: Side) -> Vec<Link> {
+fn build_side(ms: &[Monitor], i: usize, side: Side, fill_gaps: bool) -> Vec<Link> {
     let a = &ms[i];
     let edge = a.edge_mm(side);
     let (a0, a1) = a.mm_range(side);
@@ -254,6 +267,9 @@ fn build_side(ms: &[Monitor], i: usize, side: Side) -> Vec<Link> {
     let covered: Vec<(f64, f64, usize)> = pieces.iter().filter_map(|&(s, e, k)| k.map(|k| (s, e, k))).collect();
     let mut links: Vec<Link> = Vec::new();
     for &(s, e, k) in &pieces {
+        if k.is_none() && !fill_gaps {
+            continue; // a wall: nothing is physically beside this part of the edge
+        }
         let k = k.unwrap_or_else(|| {
             covered
                 .iter()
@@ -330,6 +346,19 @@ mod tests {
         let (t, to) = l.cross(1, Side::Left, Point::new(1919, 10)).unwrap();
         assert_eq!(t, 0);
         assert_eq!(to.y, 0);
+    }
+
+    #[test]
+    fn stopping_at_gaps_makes_them_walls() {
+        let ms = two_screens().monitors().to_vec();
+        let l = Layout::with_gaps(ms, true);
+        // Nothing beside the top 40 mm of the 4K screen: the cursor stays put.
+        assert!(l.cross(1, Side::Left, Point::new(1919, 10)).is_none());
+        // Where the screens do face each other, crossing works as usual.
+        let (t, _) = l.cross(1, Side::Left, Point::new(1919, 1500)).unwrap();
+        assert_eq!(t, 0);
+        // And the 1080p's whole edge still faces the 4K screen.
+        assert!(l.cross(0, Side::Right, Point::new(1920, 0)).is_some());
     }
 
     #[test]
