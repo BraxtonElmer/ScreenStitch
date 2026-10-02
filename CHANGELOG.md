@@ -3,7 +3,7 @@
 All notable changes to ScreenStitch are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.2.1] - 2026-10-02
 
 - Plugging in another monitor no longer rearranges the screens you already
   lined up. The new screen is placed next to them, and only the new one is
