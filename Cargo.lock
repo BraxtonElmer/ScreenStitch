@@ -2870,7 +2870,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "screenstitch"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "screenstitch-core",
  "screenstitch-platform",
@@ -2879,11 +2879,11 @@ dependencies = [
 
 [[package]]
 name = "screenstitch-core"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "screenstitch-platform"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "screenstitch-core",
  "serde",
@@ -2893,7 +2893,7 @@ dependencies = [
 
 [[package]]
 name = "screenstitch-settings"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "screenstitch-core",
  "screenstitch-platform",

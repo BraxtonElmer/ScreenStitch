@@ -3,6 +3,16 @@
 All notable changes to ScreenStitch are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] - 2026-10-02
+
+- New *Stop at gaps* option: where part of a screen's edge has no other screen
+  beside it, the cursor stops there instead of hopping to the nearest point of
+  the next screen.
+- Seams between screens are drawn as a thread weaving through needle holes,
+  sewn in when a screen is placed.
+- The window background is now frosted glass or solid; Mica was removed.
+- Footer credits and a Ko-fi link.
+
 ## [0.1.0] - 2026-09-29
 
 First release.
