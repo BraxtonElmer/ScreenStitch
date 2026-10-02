@@ -6,12 +6,14 @@
 
 **Stops the cursor jumping when it moves between monitors of different sizes.**
 
-[![Latest release](https://img.shields.io/github/v/release/BraxtonElmer/ScreenStitch?label=download&color=0b7f8a)](https://github.com/BraxtonElmer/ScreenStitch/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/BraxtonElmer/ScreenStitch/total?color=0b7f8a)](https://github.com/BraxtonElmer/ScreenStitch/releases)
-![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0b7f8a)
-[![License: GPL-3.0](https://img.shields.io/github/license/BraxtonElmer/ScreenStitch?color=0b7f8a)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/BraxtonElmer/ScreenStitch?label=download&labelColor=30363d&color=57606a)](https://github.com/BraxtonElmer/ScreenStitch/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/BraxtonElmer/ScreenStitch/total?labelColor=30363d&color=57606a)](https://github.com/BraxtonElmer/ScreenStitch/releases)
+![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-57606a?labelColor=30363d)
+[![License: GPL-3.0](https://img.shields.io/github/license/BraxtonElmer/ScreenStitch?labelColor=30363d&color=57606a)](LICENSE)
 
-[![Support on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/akariyu)
+<a href="https://github.com/BraxtonElmer/ScreenStitch/releases/latest"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/download-dark.svg"><img src="docs/download-light.svg" width="200" height="30" alt="Download for Windows"></picture></a>
+&nbsp;
+<a href="https://ko-fi.com/akariyu"><img src="docs/kofi.svg" width="200" height="30" alt="Support me on Ko-fi"></a>
 
 <img src="docs/screenshot.png" width="860" alt="The ScreenStitch window with two monitors laid out the way they sit on the desk">
 
