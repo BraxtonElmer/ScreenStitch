@@ -11,13 +11,29 @@ const ALIGN_PX: i32 = 2;
 /// bottoms aligned (what most desks look like); bottom or centre alignment is
 /// kept; anything else keeps the offset the user dragged in, converted to mm.
 pub fn auto_arrange(px: &[RectI], size_mm: &[(f64, f64)], primary: usize) -> Vec<RectF> {
+    auto_arrange_around(px, size_mm, primary, &vec![None; px.len()])
+}
+
+/// Like [`auto_arrange`], but screens with a `fixed` rect keep exactly that
+/// placement relative to each other, and only the rest are guessed, each next
+/// to its closest neighbour. Used when a screen joins a desk the user already
+/// lined up.
+pub fn auto_arrange_around(
+    px: &[RectI],
+    size_mm: &[(f64, f64)],
+    primary: usize,
+    fixed: &[Option<RectF>],
+) -> Vec<RectF> {
     let n = px.len();
     assert_eq!(n, size_mm.len());
+    assert_eq!(n, fixed.len());
     if n == 0 {
         return Vec::new();
     }
-    let mut placed: Vec<Option<RectF>> = vec![None; n];
-    placed[primary] = Some(RectF::new(0.0, 0.0, size_mm[primary].0, size_mm[primary].1));
+    let mut placed = fixed.to_vec();
+    if placed.iter().all(Option::is_none) {
+        placed[primary] = Some(RectF::new(0.0, 0.0, size_mm[primary].0, size_mm[primary].1));
+    }
 
     while let Some((i, j)) = closest_pair(px, &placed) {
         let a = placed[i].expect("i is placed");
@@ -189,6 +205,21 @@ mod tests {
         assert!((r[1].bottom() - r[0].y).abs() < 1e-9);
         let centre = |x: &RectF| x.x + x.w / 2.0;
         assert!((centre(&r[0]) - centre(&r[1])).abs() < 1e-9, "{r:?}");
+    }
+
+    #[test]
+    fn a_new_screen_joins_without_moving_the_others() {
+        // The user lined up 1 and 2 by their centres; Windows has them top aligned.
+        let px = [RectI::new(0, 0, 2560, 1440), RectI::new(2560, 0, 3640, 1920), RectI::new(-1920, 0, 0, 1080)];
+        let mm = [(597.0, 336.0), (296.0, 527.0), (527.0, 296.0)];
+        let a = RectF::new(0.0, 95.5, 597.0, 336.0);
+        let b = RectF::new(597.0, 0.0, 296.0, 527.0);
+        let r = auto_arrange_around(&px, &mm, 0, &[Some(a), Some(b), None]);
+        assert!((r[1].x - r[0].x - (b.x - a.x)).abs() < 1e-9, "{r:?}");
+        assert!((r[1].y - r[0].y - (b.y - a.y)).abs() < 1e-9, "{r:?}");
+        // The new one sits left of 1, bottoms aligned like a fresh guess.
+        assert!((r[2].right() - r[0].x).abs() < 1e-9, "{r:?}");
+        assert!((r[2].bottom() - r[0].bottom()).abs() < 1e-9, "{r:?}");
     }
 
     /// Tiny deterministic PRNG so the property test needs no dependency.

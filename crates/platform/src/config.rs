@@ -50,6 +50,10 @@ impl Default for Appearance {
 pub struct Profile {
     /// Monitor id → where it sits on the desk, in mm.
     pub monitors: BTreeMap<String, DeskRect>,
+    /// `true` for ScreenStitch's own guess, `false` once the user placed the
+    /// screens. Missing in files from 0.2.0 and earlier, which didn't record it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub guessed: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]

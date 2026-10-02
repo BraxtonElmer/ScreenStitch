@@ -12,7 +12,7 @@ mod engine;
 mod geom;
 mod layout;
 
-pub use arrange::auto_arrange;
+pub use arrange::{auto_arrange, auto_arrange_around};
 pub use engine::{Action, Engine};
 pub use geom::{Point, RectF, RectI, Side};
 pub use layout::{Layout, Link, Monitor};

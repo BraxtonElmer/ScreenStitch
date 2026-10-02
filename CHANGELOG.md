@@ -3,6 +3,12 @@
 All notable changes to ScreenStitch are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+- Plugging in another monitor no longer rearranges the screens you already
+  lined up. The new screen is placed next to them, and only the new one is
+  guessed from the Windows arrangement.
+
 ## [0.2.0] - 2026-10-02
 
 - New *Stop at gaps* option: where part of a screen's edge has no other screen
