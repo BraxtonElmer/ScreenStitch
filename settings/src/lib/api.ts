@@ -16,17 +16,17 @@ export type Screen = {
 };
 
 export type Theme = 'system' | 'light' | 'dark';
-export type Material = 'acrylic' | 'mica' | 'solid';
+export type Material = 'acrylic' | 'solid';
 export type Appearance = { theme: Theme; accent: string; material: Material };
 
 export type State = {
   enabled: boolean;
   pauseInFullscreen: boolean;
+  stopAtGaps: boolean;
   checkUpdates: boolean;
   startWithWindows: boolean;
   appearance: Appearance;
   systemAccent: string;
-  mica: boolean;
   trayRunning: boolean;
   version: string;
   screens: Screen[];
@@ -40,11 +40,12 @@ export const api = {
   autoLayout: () => invoke<Desk[]>('auto_layout'),
   setEnabled: (on: boolean) => invoke<void>('set_enabled', { on }),
   setPauseInFullscreen: (on: boolean) => invoke<void>('set_pause_in_fullscreen', { on }),
+  setStopAtGaps: (on: boolean) => invoke<void>('set_stop_at_gaps', { on }),
   setCheckUpdates: (on: boolean) => invoke<void>('set_check_updates', { on }),
   launchMode: () => invoke<'settings' | 'update'>('launch_mode'),
   setStartWithWindows: (on: boolean) => invoke<boolean>('set_start_with_windows', { on }),
   setAppearance: (appearance: Appearance) => invoke<void>('set_appearance', { appearance }),
   applyMaterial: (material: Material, dark: boolean) => invoke<Material>('apply_material', { material, dark }),
   setAlignmentLine: (on: boolean) => invoke<boolean>('set_alignment_line', { on }),
-  open: (which: 'source' | 'issues' | 'folder') => invoke<void>('open_link', { which }),
+  open: (which: 'source' | 'issues' | 'folder' | 'kofi') => invoke<void>('open_link', { which }),
 };

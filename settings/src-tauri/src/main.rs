@@ -38,6 +38,7 @@ fn main() {
             commands::auto_layout,
             commands::set_enabled,
             commands::set_pause_in_fullscreen,
+            commands::set_stop_at_gaps,
             commands::set_check_updates,
             commands::set_start_with_windows,
             commands::set_appearance,

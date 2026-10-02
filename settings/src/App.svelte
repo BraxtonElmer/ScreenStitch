@@ -177,6 +177,12 @@
     await api.setPauseInFullscreen(on).catch((e) => (error = String(e)));
   }
 
+  async function setStopAtGaps(on: boolean) {
+    if (!st) return;
+    st.stopAtGaps = on;
+    await api.setStopAtGaps(on).catch((e) => (error = String(e)));
+  }
+
   async function setUpdates(on: boolean) {
     if (!st) return;
     st.checkUpdates = on;
@@ -371,6 +377,13 @@
           </div>
           <div class="row">
             <div class="text">
+              <span>Stop at gaps</span>
+              <span class="muted small">Cursor stops at empty edges</span>
+            </div>
+            <Switch checked={st.stopAtGaps} label="Stop at gaps" onchange={setStopAtGaps} />
+          </div>
+          <div class="row">
+            <div class="text">
               <span>Check for updates</span>
             </div>
             <Switch checked={st.checkUpdates} label="Check for updates automatically" onchange={setUpdates} />
@@ -392,7 +405,6 @@
               value={st.appearance.material}
               options={[
                 { value: 'acrylic', label: 'Frosted glass' },
-                ...(st.mica ? [{ value: 'mica' as Material, label: 'Mica' }] : []),
                 { value: 'solid', label: 'Solid' },
               ]}
               onchange={setMaterial}
@@ -427,7 +439,8 @@
     </div>
 
     <footer class="muted">
-      <span>ScreenStitch {st.version} · Free and open source</span>
+      <span>ScreenStitch {st.version} · Built by Braxton Elmer · Free and open source ·</span>
+      <button class="link kofi" onclick={() => api.open('kofi')}>Support on Ko-fi ♥</button>
       {#if upToDate}
         <span>You have the latest version.</span>
       {:else if !available}
@@ -632,7 +645,7 @@
   .row.stack {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
   }
   .small {
     font-size: 12px;

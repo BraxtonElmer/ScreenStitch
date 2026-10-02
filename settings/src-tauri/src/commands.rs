@@ -46,11 +46,11 @@ pub struct Screen {
 pub struct State {
     enabled: bool,
     pause_in_fullscreen: bool,
+    stop_at_gaps: bool,
     check_updates: bool,
     start_with_windows: bool,
     appearance: Appearance,
     system_accent: String,
-    mica: bool,
     tray_running: bool,
     version: &'static str,
     screens: Vec<Screen>,
@@ -74,7 +74,7 @@ pub struct LayoutResult {
 }
 
 fn unreachable(displays: &[Display], rects: &[RectF]) -> Vec<String> {
-    layout(displays, rects).unreachable().into_iter().map(|i| displays[i].id.clone()).collect()
+    layout(displays, rects, false).unreachable().into_iter().map(|i| displays[i].id.clone()).collect()
 }
 
 fn to_desk(r: &RectF) -> Desk {
@@ -100,11 +100,11 @@ pub fn get_state() -> State {
     State {
         enabled: config.enabled,
         pause_in_fullscreen: config.pause_in_fullscreen,
+        stop_at_gaps: config.stop_at_gaps,
         check_updates: config.check_updates,
         start_with_windows: autostart::is_enabled(),
         appearance: config.appearance.clone(),
         system_accent: system::system_accent(),
-        mica: system::supports_mica(),
         tray_running: tray::is_running(),
         version: env!("CARGO_PKG_VERSION"),
         unreachable: unreachable(&displays, &rects),
@@ -170,6 +170,11 @@ pub fn set_pause_in_fullscreen(on: bool) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn set_stop_at_gaps(on: bool) -> Result<(), String> {
+    update(|c| c.stop_at_gaps = on)
+}
+
+#[tauri::command]
 pub fn set_check_updates(on: bool) -> Result<(), String> {
     update(|c| c.check_updates = on)
 }
@@ -199,7 +204,7 @@ pub fn set_appearance(appearance: Appearance) -> Result<(), String> {
     c.save().map_err(|e| format!("Couldn't save settings: {e}"))
 }
 
-/// Frosted glass, Mica or solid, tinted for the current light/dark theme.
+/// Frosted glass or solid, tinted for the current light/dark theme.
 /// Returns the material the window actually got.
 #[tauri::command]
 pub fn apply_material(window: tauri::WebviewWindow, material: String, dark: bool) -> String {
@@ -217,6 +222,7 @@ pub fn open_link(which: String) {
     match which.as_str() {
         "source" => system::open("https://github.com/BraxtonElmer/ScreenStitch"),
         "issues" => system::open("https://github.com/BraxtonElmer/ScreenStitch/issues"),
+        "kofi" => system::open("https://ko-fi.com/akariyu"),
         "folder" => {
             let dir = config::dir();
             let _ = std::fs::create_dir_all(&dir);
