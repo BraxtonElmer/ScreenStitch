@@ -3,6 +3,11 @@
 All notable changes to ScreenStitch are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.2] - 2026-10-03
+
+- The settings window now shows a monitor plugged in or out while it's open,
+  instead of only after it's reopened.
+
 ## [0.2.1] - 2026-10-02
 
 - Plugging in another monitor no longer rearranges the screens you already
