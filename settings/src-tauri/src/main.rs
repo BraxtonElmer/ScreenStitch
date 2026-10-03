@@ -63,6 +63,7 @@ fn main() {
                 _ => window.theme().is_ok_and(|t| t == Theme::Dark),
             };
             material::apply(&window, &a.material, dark);
+            system::notify_display_changes(&window);
             Ok(())
         })
         .on_window_event(|_, event| {

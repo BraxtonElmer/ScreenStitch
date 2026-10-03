@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import { listen } from '@tauri-apps/api/event';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { api, type Desk as DeskRect, type Material, type State, type Theme } from './lib/api';
   import { alignRow, diagonalInches, textOn, withDiagonal, type Align } from './lib/geometry';
@@ -64,14 +65,27 @@
 
   async function load() {
     try {
+      const keep = st?.screens[selected]?.id;
       st = await api.state();
       desk = st.screens.map((s) => ({ ...s.desk }));
       unreachable = st.unreachable;
-      selected = Math.max(0, st.screens.findIndex((s) => s.primary));
+      const kept = st.screens.findIndex((s) => s.id === keep);
+      selected = kept >= 0 ? kept : Math.max(0, st.screens.findIndex((s) => s.primary));
     } catch (e) {
       error = String(e);
     }
   }
+
+  // A monitor was plugged in or out: show the new set once Windows settles.
+  // Undo steps belong to the old set, so they go.
+  let displayTimer: ReturnType<typeof setTimeout> | undefined;
+  listen('displays-changed', () => {
+    clearTimeout(displayTimer);
+    displayTimer = setTimeout(async () => {
+      history = [];
+      await load();
+    }, 700);
+  });
 
   // ---- updates ----
 

@@ -4,12 +4,13 @@ use std::ptr::{null, null_mut};
 
 use screenstitch_platform::tray;
 use screenstitch_platform::wide::to_wide;
-use windows_sys::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError};
+use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
+use windows_sys::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError, HWND, LPARAM, LRESULT, WPARAM};
 use windows_sys::Win32::System::Registry::{HKEY_CURRENT_USER, RRF_RT_REG_DWORD, RegGetValueW};
 use windows_sys::Win32::System::Threading::CreateMutexW;
-use windows_sys::Win32::UI::Shell::ShellExecuteW;
+use windows_sys::Win32::UI::Shell::{DefSubclassProc, SetWindowSubclass, ShellExecuteW};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    FindWindowW, IsIconic, SW_RESTORE, SW_SHOWNORMAL, SetForegroundWindow, ShowWindow,
+    FindWindowW, IsIconic, SW_RESTORE, SW_SHOWNORMAL, SetForegroundWindow, ShowWindow, WM_DISPLAYCHANGE,
 };
 
 pub const WINDOW_TITLE: &str = "ScreenStitch";
@@ -80,6 +81,30 @@ pub fn system_accent() -> String {
     // Stored as 0xAABBGGRR.
     let (r, g, b) = (v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF);
     format!("#{r:02x}{g:02x}{b:02x}")
+}
+
+/// Tell the page when a monitor is plugged in, unplugged or rearranged, so it
+/// can show the new set without reopening the window.
+pub fn notify_display_changes(window: &WebviewWindow) {
+    let Ok(hwnd) = window.hwnd() else { return };
+    // Leaked on purpose: the subclass lives as long as the window.
+    let app = Box::into_raw(Box::new(window.app_handle().clone()));
+    unsafe { SetWindowSubclass(hwnd.0, Some(display_change_proc), 1, app as usize) };
+}
+
+unsafe extern "system" fn display_change_proc(
+    hwnd: HWND,
+    msg: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+    _id: usize,
+    app: usize,
+) -> LRESULT {
+    if msg == WM_DISPLAYCHANGE {
+        let app = unsafe { &*(app as *const AppHandle) };
+        let _ = app.emit("displays-changed", ());
+    }
+    unsafe { DefSubclassProc(hwnd, msg, wparam, lparam) }
 }
 
 pub fn open(target: &str) {
