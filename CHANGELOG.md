@@ -3,7 +3,7 @@
 All notable changes to ScreenStitch are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.2.3] - 2026-10-08
 
 - Rearranging screens in the Windows display settings now rearranges them in
   ScreenStitch too. Only the screens that moved are placed again; the rest
