@@ -3,6 +3,12 @@
 All notable changes to ScreenStitch are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+- Rearranging screens in the Windows display settings now rearranges them in
+  ScreenStitch too. Only the screens that moved are placed again; the rest
+  stay where you lined them up.
+
 ## [0.2.2] - 2026-10-03
 
 - The settings window now shows a monitor plugged in or out while it's open,

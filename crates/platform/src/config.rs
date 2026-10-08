@@ -54,6 +54,11 @@ pub struct Profile {
     /// screens. Missing in files from 0.2.0 and earlier, which didn't record it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub guessed: Option<bool>,
+    /// Monitor id → where Windows had it when this was saved, as
+    /// `[left, top, right, bottom]` pixels, to notice a rearrangement in the
+    /// Windows display settings. Missing in files from 0.2.2 and earlier.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub windows: BTreeMap<String, [i32; 4]>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
