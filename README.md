@@ -37,8 +37,9 @@ comes out exactly where your hand expects it.
   *Check alignment* draws one straight line across all your real screens so you
   can see at a glance if anything is off. Arrow keys nudge a screen 1 mm.
 - **Stays out of your games.** It only does anything at the moment the cursor
-  leaves a screen. Mouse speed, DPI and acceleration are never touched, and it
-  removes itself completely while a fullscreen game is open.
+  leaves a screen. Mouse speed, DPI and acceleration are never touched, and
+  games that lock the cursor keep it locked. Turn on *Pause in fullscreen
+  games* to have it remove itself completely while a game is in front.
 - **Your choice at gaps.** Where part of an edge has no screen beside it, the
   cursor either hops to the nearest point of the next screen or stops there,
   like the real gap on your desk.

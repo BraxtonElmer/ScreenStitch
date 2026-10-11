@@ -3,6 +3,14 @@
 All notable changes to ScreenStitch are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+- The cursor now crosses the right way from a game on one screen to the
+  others, including borderless games and games that draw their own cursor.
+- *Pause in fullscreen games* is now off by default, and switched off once
+  for existing installs. Turn it on to have ScreenStitch step aside
+  completely while a game is in front.
+
 ## [0.2.3] - 2026-10-08
 
 - Rearranging screens in the Windows display settings now rearranges them in

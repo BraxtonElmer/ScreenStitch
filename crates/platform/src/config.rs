@@ -12,8 +12,10 @@ pub struct Config {
     pub version: u32,
     #[serde(default = "yes")]
     pub enabled: bool,
-    /// Step aside while a fullscreen game or presentation is in front.
-    #[serde(default = "yes")]
+    /// Step aside while a fullscreen game or presentation is in front. Off by
+    /// default: borderless games share the desk with other screens, and the
+    /// cursor should cross the right way from them too.
+    #[serde(default)]
     pub pause_in_fullscreen: bool,
     /// Treat parts of an edge with no screen beside them as walls instead of
     /// sending the cursor to the nearest point of the next screen.
@@ -69,6 +71,9 @@ pub struct DeskRect {
     pub h: f64,
 }
 
+/// 2: pausing in fullscreen games became off by default.
+const CURRENT_VERSION: u32 = 2;
+
 fn one() -> u32 {
     1
 }
@@ -79,9 +84,9 @@ fn yes() -> bool {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            version: 1,
+            version: CURRENT_VERSION,
             enabled: true,
-            pause_in_fullscreen: true,
+            pause_in_fullscreen: false,
             check_updates: true,
             stop_at_gaps: false,
             appearance: Appearance::default(),
@@ -105,12 +110,23 @@ impl Config {
     pub fn load() -> Self {
         let p = path();
         match std::fs::read_to_string(&p) {
-            Ok(text) => serde_json::from_str(&text).unwrap_or_else(|_| {
+            Ok(text) => serde_json::from_str::<Self>(&text).map(Self::upgraded).unwrap_or_else(|_| {
                 let _ = std::fs::copy(&p, p.with_extension("json.bad"));
                 Self::default()
             }),
             Err(_) => Self::default(),
         }
+    }
+
+    /// Bring a file saved by an older version up to date. Pausing in games
+    /// was on by default with no way to have chosen it, so it is switched off
+    /// once like for new installs; turning it on again sticks.
+    fn upgraded(mut self) -> Self {
+        if self.version < 2 {
+            self.pause_in_fullscreen = false;
+        }
+        self.version = CURRENT_VERSION;
+        self
     }
 
     /// Write to a temp file and rename, so a crash never leaves half a file.
@@ -128,4 +144,18 @@ pub fn profile_key<'a>(ids: impl IntoIterator<Item = &'a str>) -> String {
     let mut ids: Vec<&str> = ids.into_iter().collect();
     ids.sort_unstable();
     ids.join("+")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pausing_in_games_is_switched_off_once_for_old_files() {
+        let old: Config = serde_json::from_str(r#"{"version":1,"pause_in_fullscreen":true}"#).unwrap();
+        assert!(!old.upgraded().pause_in_fullscreen);
+        let chosen: Config = serde_json::from_str(r#"{"version":2,"pause_in_fullscreen":true}"#).unwrap();
+        assert!(chosen.upgraded().pause_in_fullscreen);
+        assert!(!Config::default().pause_in_fullscreen);
+    }
 }

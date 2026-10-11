@@ -385,7 +385,7 @@
           <div class="row">
             <div class="text">
               <span>Pause in fullscreen games</span>
-              <span class="muted small">Fully off while a game is in front</span>
+              <span class="muted small">Fully off while a game is in front, even borderless</span>
             </div>
             <Switch checked={st.pauseInFullscreen} label="Pause in fullscreen games" onchange={setPause} />
           </div>

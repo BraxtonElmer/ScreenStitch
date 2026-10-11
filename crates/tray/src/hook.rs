@@ -153,7 +153,7 @@ impl State {
         }
 
         if from_pen_or_touch || self.bypassed() {
-            // Pens and touch point at absolute spots; games own the cursor. Step aside.
+            // Pens and touch point at absolute spots; a game may own the cursor. Step aside.
             if from_pen_or_touch || ctrl_down() {
                 self.drop_clip();
             }
@@ -185,9 +185,12 @@ impl State {
         }
     }
 
-    /// Someone else is in charge right now (a game, or the user holding Ctrl).
+    /// Someone else is in charge right now: the user holding Ctrl, a game that
+    /// confined the cursor, or (with pausing in games on) a game in front or
+    /// one that hid the cursor. Many games hide it and draw their own even in
+    /// menus, so with pausing off a hidden cursor still crosses the right way.
     fn bypassed(&mut self) -> bool {
-        if ctrl_down() || !cursor_visible() || self.fullscreen_app_in_front() {
+        if ctrl_down() || (self.pause_in_fullscreen && (!cursor_visible() || self.fullscreen_app_in_front())) {
             return true;
         }
         match current_clip() {
@@ -197,9 +200,6 @@ impl State {
     }
 
     fn fullscreen_app_in_front(&mut self) -> bool {
-        if !self.pause_in_fullscreen {
-            return false;
-        }
         let now = unsafe { GetTickCount64() };
         if now.saturating_sub(self.fullscreen.0) > 500 {
             self.fullscreen = (now, crate::fullscreen::app_in_front());
